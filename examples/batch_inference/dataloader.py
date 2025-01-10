@@ -5,13 +5,13 @@ import os
 from typing import List, Optional, Tuple
 
 import aiohttp
-from datasets import load_dataset
 import numpy as np
 import pandas as pd
 from PIL import Image
 import pyarrow as pa
 import pyarrow.parquet as pq
-
+from pyarrow import fs  # For S3 filesystem
+from datasets import load_dataset
 
 class AsyncDataLoader:
 
@@ -20,13 +20,15 @@ class AsyncDataLoader:
                  start_idx=0,
                  end_idx=None,
                  inference_server_url="http://localhost:8000",
-                 output_file="embeddings.parquet"):
+                 output_path="embeddings.parquet"):
         self.batch_size = batch_size
         self.start_idx = start_idx
         self.end_idx = end_idx
         self.inference_server_url = inference_server_url
-        self.output_file = output_file
+        self.output_path = output_path
         self.session = None
+        # Create an S3 filesystem. You may need credentials/params.
+        self.s3_fs = fs.LocalFileSystem()
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession()
@@ -65,20 +67,19 @@ class AsyncDataLoader:
             self, image_data: List[str],
             batch_id: str) -> Tuple[List[np.ndarray], List[int]]:
         """Get CLIP embeddings for a batch of images"""
-        # Send request to inference server with raw image data
-        async with self.session.post(f"{self.inference_server_url}/embed",
-                                     json={
-                                         "batch_id": batch_id,
-                                         "images": image_data
-                                     }) as response:
+        async with self.session.post(
+            f"{self.inference_server_url}/embed",
+            json={"batch_id": batch_id, "images": image_data}
+        ) as response:
             result = await response.json()
-            return [np.array(emb) for emb in result["embeddings"]
-                   ], result["valid_indices"]
+            return [np.array(emb) for emb in result["embeddings"]], result["valid_indices"]
 
     def create_dataset(self):
         """Create a dataset iterator"""
-        dataset = load_dataset("laion/relaion2B-en-research-safe",
-                               streaming=True)['train']
+        dataset = load_dataset(
+            "laion/relaion2B-en-research-safe",
+            streaming=True
+        )["train"]
 
         if self.start_idx > 0:
             dataset = dataset.skip(self.start_idx)
@@ -87,52 +88,55 @@ class AsyncDataLoader:
 
         return dataset.iter(batch_size=self.batch_size)
 
-    async def save_embeddings(self, urls: List[str],
-                              embeddings: List[np.ndarray]):
-        """Save embeddings to parquet file with append mode"""
+    async def save_embeddings(self,
+                              urls: List[str],
+                              embeddings: List[np.ndarray],
+                              batch_idx: int):
+        """Save embeddings to a partitioned Parquet dataset in S3"""
         # Convert embeddings to lists for storage
         embeddings_list = [emb.tolist() for emb in embeddings]
 
-        # Create DataFrame
-        df = pd.DataFrame({'url': urls, 'embedding': embeddings_list})
+        # Create DataFrame with partition column
+        df = pd.DataFrame({
+            "batch_idx": [batch_idx] * len(urls),
+            "url": urls,
+            "embedding": embeddings_list
+        })
 
         # Convert to Arrow table
         table = pa.Table.from_pandas(df)
 
-        # Write to parquet file (append if exists)
-        if os.path.exists(self.output_file):
-            pq.write_to_dataset(table,
-                                self.output_file,
-                                filesystem=pa.LocalFileSystem(),
-                                existing_data_behavior='append_to_dataset')
-        else:
-            pq.write_table(table, self.output_file)
+        # Write to partitioned dataset on S3
+        pq.write_to_dataset(
+            table=table,
+            root_path=self.output_path,
+            filesystem=self.s3_fs,
+            partition_cols=["batch_idx"],
+            existing_data_behavior="overwrite_or_ignore"
+        )
 
+    async def run(self):
+        dataset_iter = self.create_dataset()
 
-async def main():
-    async with AsyncDataLoader(batch_size=32) as loader:
-        dataset = loader.create_dataset()
-
-        for batch_idx, batch in enumerate(dataset):
-            # Download and process images from URLs
-            images, download_indices = await loader.process_batch(batch)
-
+        for batch_idx, batch in enumerate(dataset_iter):
+            images, download_indices = await self.process_batch(batch)
             if images:
-                # Get CLIP embeddings for valid images
-                embeddings, embed_indices = await loader.get_embeddings(
+                embeddings, embed_indices = await self.get_embeddings(
                     images, f"batch_{batch_idx}")
 
-                # Map back to original indices
                 valid_indices = [download_indices[i] for i in embed_indices]
-                valid_urls = [batch['url'][i] for i in valid_indices]
+                valid_urls = [batch["url"][i] for i in valid_indices]
 
                 print(
                     f"Batch {batch_idx}: {len(valid_urls)} successful out of {len(batch['url'])} total"
                 )
 
-                # Save embeddings to parquet file
-                await loader.save_embeddings(valid_urls, embeddings)
+                # Save embeddings (partitioned by batch_idx)
+                await self.save_embeddings(valid_urls, embeddings, batch_idx)
 
+async def main():
+    async with AsyncDataLoader(batch_size=32) as loader:
+        await loader.run()
 
 if __name__ == "__main__":
     asyncio.run(main())
