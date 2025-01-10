@@ -1,0 +1,17 @@
+resources:
+  accelerators: T4:1  # Use 1 T4 GPU
+  cloud: gcp  # Use Google Cloud Platform
+  
+setup: |
+  pip install torch torchvision ftfy regex tqdm
+  pip install git+https://github.com/openai/CLIP.git
+  pip install datasets webdataset requests Pillow
+  pip install fastapi uvicorn aiohttp
+
+run: |
+  # Start the inference server
+  python inference_server.py &
+  # Wait for server to start
+  sleep 5
+  # Run the dataloader
+  python dataloader.py
