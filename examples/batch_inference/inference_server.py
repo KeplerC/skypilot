@@ -1,10 +1,9 @@
 import asyncio
 import base64
 from io import BytesIO
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import clip
-from fastapi import BackgroundTasks
 from fastapi import FastAPI
 import numpy as np
 from PIL import Image
@@ -13,8 +12,12 @@ import torch
 import uvicorn
 
 
-class ClipInferenceServer:
+class EmbeddingRequest(BaseModel):
+    input: Union[str, List[str]]  # List of base64 encoded images
+    model: str = "ViT-B/32"  # Default model, similar to OpenAI's model parameter
 
+
+class ClipInferenceServer:
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model, self.preprocess = clip.load("ViT-B/32", device=self.device)
@@ -37,22 +40,23 @@ class ClipInferenceServer:
             return image_features.cpu().numpy()
 
 
-class ImageBatch(BaseModel):
-    batch_id: str
-    images: List[str]  # Base64 encoded images
-
-
 app = FastAPI()
 inference_server = ClipInferenceServer()
 
 
-@app.post("/embed")
-async def embed_images(batch: ImageBatch):
+@app.post("/v1/embeddings")
+async def create_embeddings(request: EmbeddingRequest):
+    # Handle both single string and list inputs
+    if isinstance(request.input, str):
+        images_data = [request.input]
+    else:
+        images_data = request.input
+
     # Convert base64 strings directly to PIL Images
     images = []
-    valid_indices = []  # Keep track of which images were successfully processed
+    valid_indices = []
 
-    for idx, img_data in enumerate(batch.images):
+    for idx, img_data in enumerate(images_data):
         try:
             image_bytes = base64.b64decode(img_data)
             img = Image.open(BytesIO(image_bytes))
@@ -64,9 +68,13 @@ async def embed_images(batch: ImageBatch):
 
     if not images:
         return {
-            "batch_id": batch.batch_id,
-            "embeddings": [],
-            "valid_indices": []
+            "object": "list",
+            "data": [],
+            "model": request.model,
+            "usage": {
+                "prompt_tokens": 0,
+                "total_tokens": 0
+            }
         }
 
     # Process images concurrently
@@ -75,25 +83,35 @@ async def embed_images(batch: ImageBatch):
             *[inference_server.get_embedding(img) for img in images],
             return_exceptions=True)
 
-        # Filter out failed embeddings
-        valid_embeddings = []
-        final_indices = []
+        # Format response similar to OpenAI
+        data = []
         for idx, emb in enumerate(embeddings):
             if not isinstance(emb, Exception):
-                valid_embeddings.append(emb.tolist())
-                final_indices.append(valid_indices[idx])
+                data.append({
+                    "object": "embedding",
+                    "embedding": emb.flatten().tolist(),
+                    "index": valid_indices[idx]
+                })
 
         return {
-            "batch_id": batch.batch_id,
-            "embeddings": valid_embeddings,
-            "valid_indices": final_indices
+            "object": "list",
+            "data": data,
+            "model": request.model,
+            "usage": {
+                "prompt_tokens": len(data),  # Using number of successful embeddings as token count
+                "total_tokens": len(data)
+            }
         }
     except Exception as e:
-        print(f"Error processing batch {batch.batch_id}: {str(e)}")
+        print(f"Error processing embeddings: {str(e)}")
         return {
-            "batch_id": batch.batch_id,
-            "embeddings": [],
-            "valid_indices": []
+            "object": "list",
+            "data": [],
+            "model": request.model,
+            "usage": {
+                "prompt_tokens": 0,
+                "total_tokens": 0
+            }
         }
 
 

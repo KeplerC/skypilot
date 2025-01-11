@@ -1,8 +1,9 @@
+import argparse
 import asyncio
 import base64
 from io import BytesIO
 import os
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 import aiohttp
 import numpy as np
@@ -10,25 +11,22 @@ import pandas as pd
 from PIL import Image
 import pyarrow as pa
 import pyarrow.parquet as pq
-from pyarrow import fs  # For S3 filesystem
 from datasets import load_dataset
+from tqdm import tqdm
 
 class AsyncDataLoader:
-
     def __init__(self,
-                 batch_size=32,
-                 start_idx=0,
-                 end_idx=None,
-                 inference_server_url="http://localhost:8000",
-                 output_path="embeddings.parquet"):
-        self.batch_size = batch_size
+                start_idx: int,
+                end_idx: int,
+                inference_server_url: str = "http://localhost:8000",
+                output_path: str = "embeddings.parquet"):
         self.start_idx = start_idx
         self.end_idx = end_idx
         self.inference_server_url = inference_server_url
         self.output_path = output_path
         self.session = None
-        # Create an S3 filesystem. You may need credentials/params.
-        self.s3_fs = fs.LocalFileSystem()
+        # Store results in memory
+        self.results: List[Dict] = []
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession()
@@ -49,30 +47,19 @@ class AsyncDataLoader:
             print(f"Error downloading image from {url}: {str(e)}")
         return None
 
-    async def process_batch(self, batch) -> Tuple[List[str], List[int]]:
-        """Process a batch of URLs and return valid image data"""
-        tasks = [self.download_image(url) for url in batch['url']]
-        image_data = await asyncio.gather(*tasks)
-
-        valid_images = []
-        valid_indices = []
-        for idx, img_data in enumerate(image_data):
-            if img_data is not None:
-                valid_images.append(img_data)
-                valid_indices.append(idx)
-
-        return valid_images, valid_indices
-
-    async def get_embeddings(
-            self, image_data: List[str],
-            batch_id: str) -> Tuple[List[np.ndarray], List[int]]:
-        """Get CLIP embeddings for a batch of images"""
-        async with self.session.post(
-            f"{self.inference_server_url}/embed",
-            json={"batch_id": batch_id, "images": image_data}
-        ) as response:
-            result = await response.json()
-            return [np.array(emb) for emb in result["embeddings"]], result["valid_indices"]
+    async def get_embedding(self, image_data: str, idx: int) -> Optional[np.ndarray]:
+        """Get CLIP embedding for a single image"""
+        try:
+            async with self.session.post(
+                f"{self.inference_server_url}/v1/embeddings",
+                json={"input": image_data, "model": "ViT-B/32"}
+            ) as response:
+                result = await response.json()
+                if result["data"]:
+                    return np.array(result["data"][0]["embedding"])
+        except Exception as e:
+            print(f"Error getting embedding for index {idx}: {str(e)}")
+        return None
 
     def create_dataset(self):
         """Create a dataset iterator"""
@@ -83,59 +70,83 @@ class AsyncDataLoader:
 
         if self.start_idx > 0:
             dataset = dataset.skip(self.start_idx)
-        if self.end_idx is not None:
-            dataset = dataset.take(self.end_idx - self.start_idx)
+        dataset = dataset.take(self.end_idx - self.start_idx)
+        return dataset
 
-        return dataset.iter(batch_size=self.batch_size)
+    def save_results(self):
+        """Save all collected results to a single parquet file"""
+        if not self.results:
+            print("No results to save")
+            return
 
-    async def save_embeddings(self,
-                              urls: List[str],
-                              embeddings: List[np.ndarray],
-                              batch_idx: int):
-        """Save embeddings to a partitioned Parquet dataset in S3"""
-        # Convert embeddings to lists for storage
-        embeddings_list = [emb.tolist() for emb in embeddings]
-
-        # Create DataFrame with partition column
-        df = pd.DataFrame({
-            "batch_idx": [batch_idx] * len(urls),
-            "url": urls,
-            "embedding": embeddings_list
-        })
-
-        # Convert to Arrow table
+        # Convert results to DataFrame
+        df = pd.DataFrame(self.results)
+        
+        # Save to parquet
         table = pa.Table.from_pandas(df)
+        pq.write_table(table, self.output_path)
+        print(f"Saved {len(self.results)} embeddings to {self.output_path}")
 
-        # Write to partitioned dataset on S3
-        pq.write_to_dataset(
-            table=table,
-            root_path=self.output_path,
-            filesystem=self.s3_fs,
-            partition_cols=["batch_idx"],
-            existing_data_behavior="overwrite_or_ignore"
-        )
+    async def process_single_item(self, item, idx: int) -> bool:
+        """Process a single item from the dataset"""
+        image_data = await self.download_image(item["url"])
+        if image_data is None:
+            return False
+
+        embedding = await self.get_embedding(image_data, idx)
+        if embedding is None:
+            return False
+
+        # Store result in memory
+        self.results.append({
+            "idx": idx,
+            "url": item["url"],
+            "embedding": embedding.tolist()
+        })
+        return True
 
     async def run(self):
-        dataset_iter = self.create_dataset()
-
-        for batch_idx, batch in enumerate(dataset_iter):
-            images, download_indices = await self.process_batch(batch)
-            if images:
-                embeddings, embed_indices = await self.get_embeddings(
-                    images, f"batch_{batch_idx}")
-
-                valid_indices = [download_indices[i] for i in embed_indices]
-                valid_urls = [batch["url"][i] for i in valid_indices]
-
-                print(
-                    f"Batch {batch_idx}: {len(valid_urls)} successful out of {len(batch['url'])} total"
-                )
-
-                # Save embeddings (partitioned by batch_idx)
-                await self.save_embeddings(valid_urls, embeddings, batch_idx)
+        dataset = self.create_dataset()
+        total = self.end_idx - self.start_idx
+        
+        # Process items concurrently in chunks to control memory usage
+        chunk_size = 100  # Adjust based on memory constraints
+        tasks = []
+        
+        with tqdm(total=total, desc="Processing images") as pbar:
+            for idx, item in enumerate(dataset, start=self.start_idx):
+                task = asyncio.create_task(self.process_single_item(item, idx))
+                tasks.append(task)
+                
+                # When chunk is full or at the end, wait for completion
+                if len(tasks) >= chunk_size or idx == self.end_idx - 1:
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
+                    for result in results:
+                        if isinstance(result, bool):
+                            pbar.set_postfix({"status": "success" if result else "failed"})
+                        else:
+                            pbar.set_postfix({"status": "error"})
+                        pbar.update(1)
+                    tasks = []
+        
+        # Save all results at once
+        self.save_results()
 
 async def main():
-    async with AsyncDataLoader(batch_size=32) as loader:
+    parser = argparse.ArgumentParser(description="Process images and generate CLIP embeddings")
+    parser.add_argument("--start-idx", type=int, required=True, help="Starting index in the dataset")
+    parser.add_argument("--end-idx", type=int, required=True, help="Ending index in the dataset")
+    parser.add_argument("--server-url", type=str, default="http://localhost:8000", help="Inference server URL")
+    parser.add_argument("--output", type=str, default="embeddings.parquet", help="Output parquet file path")
+    
+    args = parser.parse_args()
+    
+    async with AsyncDataLoader(
+        start_idx=args.start_idx,
+        end_idx=args.end_idx,
+        inference_server_url=args.server_url,
+        output_path=args.output
+    ) as loader:
         await loader.run()
 
 if __name__ == "__main__":
