@@ -20,11 +20,33 @@ from tenacity import wait_exponential
 from tqdm import tqdm
 import logging
 
-# Add logging setup near the top of the file
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# Get node rank and total nodes from environment variables
+NODE_RANK = int(os.getenv('SKYPILOT_SETUP_NODE_RANK', '0'))
+NUM_NODES = int(os.getenv('SKYPILOT_NUM_NODES', '1'))
+
+def calculate_node_range(start_idx: int, end_idx: int, node_rank: int, num_nodes: int) -> Tuple[int, int]:
+    """Calculate the range of indices this node should process.
+    
+    Args:
+        start_idx: Global start index
+        end_idx: Global end index
+        node_rank: Current node's rank (0-based)
+        num_nodes: Total number of nodes
+        
+    Returns:
+        Tuple of (node_start_idx, node_end_idx)
+    """
+    total_range = end_idx - start_idx
+    chunk_size = total_range // num_nodes
+    remainder = total_range % num_nodes
+    
+    # Distribute remainder across first few nodes
+    node_start = start_idx + (node_rank * chunk_size) + min(node_rank, remainder)
+    if node_rank < remainder:
+        chunk_size += 1
+    node_end = node_start + chunk_size
+    
+    return node_start, node_end
 
 class AsyncDataLoader:
 
@@ -291,10 +313,24 @@ async def main():
 
     args = parser.parse_args()
 
-    async with AsyncDataLoader(start_idx=args.start_idx,
-                               end_idx=args.end_idx,
-                               inference_server_url=args.server_url,
-                               output_path=args.output) as loader:
+    # Calculate node-specific range
+    node_start, node_end = calculate_node_range(
+        args.start_idx, args.end_idx, NODE_RANK, NUM_NODES
+    )
+    
+    # Modify output path to include node rank
+    output_path = args.output
+    if NUM_NODES > 1:
+        base, ext = os.path.splitext(args.output)
+        output_path = f"{base}_node{NODE_RANK}{ext}"
+    
+    logging.info(f"Node {NODE_RANK}/{NUM_NODES} processing range [{node_start}, {node_end})")
+    logging.info(f"Output will be saved to: {output_path}")
+
+    async with AsyncDataLoader(start_idx=node_start,
+                             end_idx=node_end,
+                             inference_server_url=args.server_url,
+                             output_path=output_path) as loader:
         await loader.run()
 
 
