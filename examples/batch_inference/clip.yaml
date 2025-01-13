@@ -1,17 +1,45 @@
+name: clip-batch-inference
+
 resources:
   accelerators: T4:1  # Use 1 T4 GPU
-  cloud: gcp  # Use Google Cloud Platform
-  
+
+file_mounts:
+  /artifacts:
+    name: kych-clip-embeddings
+    store: S3
+    mode: MOUNT
+
 setup: |
-  pip install torch torchvision ftfy regex tqdm
+  # Install required packages
+  pip install torch==2.1.0 torchvision==0.16.0 ftfy regex tqdm
   pip install git+https://github.com/openai/CLIP.git
   pip install datasets webdataset requests Pillow
-  pip install fastapi uvicorn aiohttp
+  pip install fastapi uvicorn aiohttp pandas pyarrow tenacity
 
 run: |
-  # Start the inference server
-  python inference_server.py &
+  # Create log directory
+  mkdir -p /artifacts/logs
+
+  # Start the inference server in the background
+  python inference_server.py > /artifacts/logs/server.log 2>&1 &
+  SERVER_PID=$!
+
   # Wait for server to start
-  sleep 5
-  # Run the dataloader
-  python dataloader.py
+  echo "Waiting for server to start..."
+  sleep 10
+
+  # Run the dataloader with specific parameters
+  python dataloader.py \
+    --start-idx 0 \
+    --end-idx 1000000 \
+    --server-url "http://localhost:5005" \
+    --output "/artifacts/embeddings.parquet" \
+    > /artifacts/logs/dataloader.log 2>&1
+
+  # Cleanup: Kill the server process
+  kill $SERVER_PID
+
+  # Wait for server to shutdown gracefully
+  wait $SERVER_PID
+
+  echo "Processing complete. Results saved to /artifacts/embeddings.parquet"
