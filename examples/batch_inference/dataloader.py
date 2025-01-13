@@ -83,7 +83,7 @@ class AsyncDataLoader:
                     f"{self.inference_server_url}/v1/embeddings",
                     json={
                         "input": image_data,
-                        "model": "ViT-B/32"
+                        "model": "ViT-bigG-14"
                     }) as response:
                 result = await response.json()
                 if result["data"]:

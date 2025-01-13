@@ -3,7 +3,7 @@ import base64
 from io import BytesIO
 from typing import Dict, List, Union
 
-import clip
+import open_clip
 from fastapi import FastAPI
 import numpy as np
 from PIL import Image
@@ -21,19 +21,33 @@ class ClipInferenceServer:
 
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model, self.preprocess = clip.load("ViT-B/32", device=self.device)
+        self.models = {}  # Dictionary to store loaded models
         self.lock = asyncio.Lock()
 
-    async def get_embedding(self, image: Image.Image) -> np.ndarray:
-        """Get CLIP embedding for a PIL Image"""
+    async def get_model(self, model_name: str):
+        """Load model if not already loaded"""
+        if model_name not in self.models:
+            model, _, preprocess = open_clip.create_model_and_transforms(
+                model_name,
+                pretrained="laion2b_s39b_b160k",  
+                device=self.device
+            )
+            self.models[model_name] = (model, preprocess)
+        return self.models[model_name]
+
+    async def get_embedding(self, image: Image.Image, model_name: str) -> np.ndarray:
+        """Get CLIP embedding for a PIL Image using specified model"""
+        # Get or load the requested model
+        model, preprocess = await self.get_model(model_name)
+        
         # Preprocess the image
-        image_input = self.preprocess(image).unsqueeze(0).to(self.device)
+        image_input = preprocess(image).unsqueeze(0).to(self.device)
 
         # Use lock to prevent concurrent GPU operations
         async with self.lock:
             # Calculate the image embedding
             with torch.no_grad():
-                image_features = self.model.encode_image(image_input)
+                image_features = model.encode_image(image_input)
 
             # Normalize the features
             image_features /= image_features.norm(dim=-1, keepdim=True)
@@ -78,10 +92,10 @@ async def create_embeddings(request: EmbeddingRequest):
             }
         }
 
-    # Process images concurrently
+    # Process images concurrently with specified model
     try:
         embeddings = await asyncio.gather(
-            *[inference_server.get_embedding(img) for img in images],
+            *[inference_server.get_embedding(img, request.model) for img in images],
             return_exceptions=True)
 
         # Format response similar to OpenAI
