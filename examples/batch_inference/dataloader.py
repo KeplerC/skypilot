@@ -31,10 +31,16 @@ class AsyncDataLoader:
         self.end_idx = end_idx
         self.inference_server_url = inference_server_url
         self.output_path = output_path
+        self.csv_path = output_path.replace('.parquet', '.csv')
         self.semaphore = Semaphore(max_concurrent)
         self.session = None
-        # Store results in memory
+        # Store results in memory before writing to CSV
         self.results: List[Dict] = []
+        
+        # Create CSV file with headers if it doesn't exist
+        if not os.path.exists(self.csv_path):
+            pd.DataFrame(columns=['idx', 'url', 'embedding']).to_csv(
+                self.csv_path, index=False)
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession()
@@ -88,18 +94,34 @@ class AsyncDataLoader:
         return dataset
 
     def save_results(self):
-        """Save all collected results to a single parquet file"""
+        """Append results to CSV file"""
         if not self.results:
             print("No results to save")
             return
 
-        # Convert results to DataFrame
+        # Convert results to DataFrame and append to CSV
         df = pd.DataFrame(self.results)
+        df.to_csv(self.csv_path, mode='a', header=False, index=False)
+        print(f"Appended {len(self.results)} embeddings to {self.csv_path}")
 
-        # Save to parquet
+    def finalize_results(self):
+        """Convert final CSV to parquet format"""
+        if not os.path.exists(self.csv_path):
+            print("No CSV file found to convert")
+            return
+
+        # Read CSV and convert to parquet
+        df = pd.read_csv(self.csv_path)
+        # Convert string representation of list to actual numpy array
+        df['embedding'] = df['embedding'].apply(eval)
+        
         table = pa.Table.from_pandas(df)
         pq.write_table(table, self.output_path)
-        print(f"Saved {len(self.results)} embeddings to {self.output_path}")
+        print(f"Converted CSV to parquet: {self.output_path}")
+        
+        # Clean up CSV file
+        os.remove(self.csv_path)
+        print(f"Removed intermediate CSV file: {self.csv_path}")
 
     async def process_single_item(self, item, idx: int) -> bool:
         """Process a single item from the dataset"""
@@ -139,8 +161,7 @@ class AsyncDataLoader:
                 tasks.append(task)
 
                 if len(tasks) >= chunk_size or idx == self.end_idx - 1:
-                    results = await asyncio.gather(*tasks,
-                                                   return_exceptions=True)
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
                     for result in results:
                         if isinstance(result, bool):
                             pbar.set_postfix(
@@ -150,13 +171,15 @@ class AsyncDataLoader:
                         pbar.update(1)
                     tasks = []
 
-                    # Save intermediate results periodically
+                    # Save intermediate results to CSV periodically
                     if len(self.results) >= chunk_size:
                         self.save_results()
                         self.results = []  # Clear memory after saving
 
         # Save any remaining results
         self.save_results()
+        # Convert final CSV to parquet
+        self.finalize_results()
 
 
 async def main():
