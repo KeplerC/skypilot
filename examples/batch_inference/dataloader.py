@@ -55,12 +55,13 @@ class AsyncDataLoader:
                  end_idx: int,
                  inference_server_url: str = "http://localhost:8000",
                  output_path: str = "embeddings.parquet",
+                 csv_path: str = "/tmp/intermediate.csv",
                  max_concurrent: int = 50):
         self.start_idx = start_idx
         self.end_idx = end_idx
         self.inference_server_url = inference_server_url
         self.output_path = output_path
-        self.csv_path = output_path.replace('.parquet', '_intermediate.csv')
+        self.csv_path = csv_path
         self.semaphore = Semaphore(max_concurrent)
         self.session = None
         # Store a small batch of results in memory before writing to CSV
@@ -131,6 +132,7 @@ class AsyncDataLoader:
 
         with open(self.csv_path, 'a', newline='') as f:
             writer = csv.writer(f)
+            print(f"Appending {len(self.results)} results to {self.csv_path}")
             for result in self.results:
                 writer.writerow([
                     result['idx'],
@@ -206,8 +208,8 @@ class AsyncDataLoader:
         total = self.end_idx - self.start_idx
 
         # Create queues for download and embedding tasks
-        download_queue = asyncio.Queue(maxsize=500)  # Buffer downloaded images
-        embedding_queue = asyncio.Queue(maxsize=500)  # Buffer images ready for embedding
+        download_queue = asyncio.Queue(maxsize=10)  # Buffer downloaded images
+        embedding_queue = asyncio.Queue(maxsize=10)  # Buffer images ready for embedding
         
         # Create progress bars for each stage
         with tqdm(total=total, desc="Total Progress") as total_pbar, \
