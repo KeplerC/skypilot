@@ -21,7 +21,7 @@ from tqdm import tqdm
 import logging
 
 # Get node rank and total nodes from environment variables
-NODE_RANK = int(os.getenv('SKYPILOT_SETUP_NODE_RANK', '0'))
+NODE_RANK = int(os.getenv('SKYPILOT_NODE_RANK', '0'))
 NUM_NODES = int(os.getenv('SKYPILOT_NUM_NODES', '1'))
 
 def calculate_node_range(start_idx: int, end_idx: int, node_rank: int, num_nodes: int) -> Tuple[int, int]:
@@ -132,7 +132,6 @@ class AsyncDataLoader:
 
         with open(self.csv_path, 'a', newline='') as f:
             writer = csv.writer(f)
-            print(f"Appending {len(self.results)} results to {self.csv_path}")
             for result in self.results:
                 writer.writerow([
                     result['idx'],
@@ -208,8 +207,8 @@ class AsyncDataLoader:
         total = self.end_idx - self.start_idx
 
         # Create queues for download and embedding tasks
-        download_queue = asyncio.Queue(maxsize=10)  # Buffer downloaded images
-        embedding_queue = asyncio.Queue(maxsize=10)  # Buffer images ready for embedding
+        download_queue = asyncio.Queue(maxsize=500)  # Buffer downloaded images
+        embedding_queue = asyncio.Queue(maxsize=500)  # Buffer images ready for embedding
         
         # Create progress bars for each stage
         with tqdm(total=total, desc="Total Progress") as total_pbar, \
