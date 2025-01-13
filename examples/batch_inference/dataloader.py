@@ -1,28 +1,32 @@
 import argparse
 import asyncio
+from asyncio import Semaphore
 import base64
 from io import BytesIO
 import os
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 
 import aiohttp
+from datasets import load_dataset
 import numpy as np
 import pandas as pd
 from PIL import Image
 import pyarrow as pa
 import pyarrow.parquet as pq
-from datasets import load_dataset
+from tenacity import retry
+from tenacity import stop_after_attempt
+from tenacity import wait_exponential
 from tqdm import tqdm
-from asyncio import Semaphore
-from tenacity import retry, stop_after_attempt, wait_exponential
+
 
 class AsyncDataLoader:
+
     def __init__(self,
-                start_idx: int,
-                end_idx: int,
-                inference_server_url: str = "http://localhost:8000",
-                output_path: str = "embeddings.parquet",
-                max_concurrent: int = 50):
+                 start_idx: int,
+                 end_idx: int,
+                 inference_server_url: str = "http://localhost:8000",
+                 output_path: str = "embeddings.parquet",
+                 max_concurrent: int = 50):
         self.start_idx = start_idx
         self.end_idx = end_idx
         self.inference_server_url = inference_server_url
@@ -40,12 +44,15 @@ class AsyncDataLoader:
         if self.session:
             await self.session.close()
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    @retry(stop=stop_after_attempt(3),
+           wait=wait_exponential(multiplier=1, min=4, max=10))
     async def download_image(self, url: str) -> Optional[str]:
         """Download image from URL with retry mechanism"""
         try:
             async with self.semaphore:  # Limit concurrent connections
-                async with self.session.get(url, timeout=10, ssl=False) as response:  # Disable SSL verification
+                async with self.session.get(
+                        url, timeout=10,
+                        ssl=False) as response:  # Disable SSL verification
                     if response.status == 200:
                         data = await response.read()
                         return base64.b64encode(data).decode()
@@ -53,13 +60,16 @@ class AsyncDataLoader:
             print(f"Error downloading image from {url}: {str(e)}")
         return None
 
-    async def get_embedding(self, image_data: str, idx: int) -> Optional[np.ndarray]:
+    async def get_embedding(self, image_data: str,
+                            idx: int) -> Optional[np.ndarray]:
         """Get CLIP embedding for a single image"""
         try:
             async with self.session.post(
-                f"{self.inference_server_url}/v1/embeddings",
-                json={"input": image_data, "model": "ViT-B/32"}
-            ) as response:
+                    f"{self.inference_server_url}/v1/embeddings",
+                    json={
+                        "input": image_data,
+                        "model": "ViT-B/32"
+                    }) as response:
                 result = await response.json()
                 if result["data"]:
                     return np.array(result["data"][0]["embedding"])
@@ -69,10 +79,8 @@ class AsyncDataLoader:
 
     def create_dataset(self):
         """Create a dataset iterator"""
-        dataset = load_dataset(
-            "laion/relaion2B-en-research-safe",
-            streaming=True
-        )["train"]
+        dataset = load_dataset("laion/relaion2B-en-research-safe",
+                               streaming=True)["train"]
 
         if self.start_idx > 0:
             dataset = dataset.skip(self.start_idx)
@@ -87,7 +95,7 @@ class AsyncDataLoader:
 
         # Convert results to DataFrame
         df = pd.DataFrame(self.results)
-        
+
         # Save to parquet
         table = pa.Table.from_pandas(df)
         pq.write_table(table, self.output_path)
@@ -120,50 +128,65 @@ class AsyncDataLoader:
     async def run(self):
         dataset = self.create_dataset()
         total = self.end_idx - self.start_idx
-        
+
         # Process items in larger chunks for better parallelization
         chunk_size = 10  # Increased chunk size
         tasks = []
-        
+
         with tqdm(total=total, desc="Processing images") as pbar:
             for idx, item in enumerate(dataset, start=self.start_idx):
                 task = asyncio.create_task(self.process_single_item(item, idx))
                 tasks.append(task)
-                
+
                 if len(tasks) >= chunk_size or idx == self.end_idx - 1:
-                    results = await asyncio.gather(*tasks, return_exceptions=True)
+                    results = await asyncio.gather(*tasks,
+                                                   return_exceptions=True)
                     for result in results:
                         if isinstance(result, bool):
-                            pbar.set_postfix({"status": "success" if result else "failed"})
+                            pbar.set_postfix(
+                                {"status": "success" if result else "failed"})
                         else:
                             pbar.set_postfix({"status": "error"})
                         pbar.update(1)
                     tasks = []
-                    
+
                     # Save intermediate results periodically
                     if len(self.results) >= chunk_size:
                         self.save_results()
                         self.results = []  # Clear memory after saving
-        
+
         # Save any remaining results
         self.save_results()
 
+
 async def main():
-    parser = argparse.ArgumentParser(description="Process images and generate CLIP embeddings")
-    parser.add_argument("--start-idx", type=int, required=True, help="Starting index in the dataset")
-    parser.add_argument("--end-idx", type=int, required=True, help="Ending index in the dataset")
-    parser.add_argument("--server-url", type=str, default="http://localhost:5005", help="Inference server URL")
-    parser.add_argument("--output", type=str, default="embeddings.parquet", help="Output parquet file path")
-    
+    parser = argparse.ArgumentParser(
+        description="Process images and generate CLIP embeddings")
+    parser.add_argument("--start-idx",
+                        type=int,
+                        required=True,
+                        help="Starting index in the dataset")
+    parser.add_argument("--end-idx",
+                        type=int,
+                        required=True,
+                        help="Ending index in the dataset")
+    parser.add_argument("--server-url",
+                        type=str,
+                        default="http://localhost:5005",
+                        help="Inference server URL")
+    parser.add_argument("--output",
+                        type=str,
+                        default="embeddings.parquet",
+                        help="Output parquet file path")
+
     args = parser.parse_args()
-    
-    async with AsyncDataLoader(
-        start_idx=args.start_idx,
-        end_idx=args.end_idx,
-        inference_server_url=args.server_url,
-        output_path=args.output
-    ) as loader:
+
+    async with AsyncDataLoader(start_idx=args.start_idx,
+                               end_idx=args.end_idx,
+                               inference_server_url=args.server_url,
+                               output_path=args.output) as loader:
         await loader.run()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

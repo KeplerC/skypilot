@@ -18,6 +18,7 @@ class EmbeddingRequest(BaseModel):
 
 
 class ClipInferenceServer:
+
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model, self.preprocess = clip.load("ViT-B/32", device=self.device)
@@ -98,7 +99,9 @@ async def create_embeddings(request: EmbeddingRequest):
             "data": data,
             "model": request.model,
             "usage": {
-                "prompt_tokens": len(data),  # Using number of successful embeddings as token count
+                "prompt_tokens": len(
+                    data
+                ),  # Using number of successful embeddings as token count
                 "total_tokens": len(data)
             }
         }
