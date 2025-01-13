@@ -2,6 +2,7 @@ import argparse
 import asyncio
 from asyncio import Semaphore
 import base64
+import csv
 from io import BytesIO
 import os
 from typing import Dict, List, Optional, Tuple
@@ -31,16 +32,18 @@ class AsyncDataLoader:
         self.end_idx = end_idx
         self.inference_server_url = inference_server_url
         self.output_path = output_path
-        self.csv_path = output_path.replace('.parquet', '.csv')
+        self.csv_path = output_path.replace('.parquet', '_intermediate.csv')
         self.semaphore = Semaphore(max_concurrent)
         self.session = None
-        # Store results in memory before writing to CSV
+        # Store a small batch of results in memory before writing to CSV
         self.results: List[Dict] = []
-        
+        self.batch_size = 100  # Write to CSV every 100 items
+
         # Create CSV file with headers if it doesn't exist
         if not os.path.exists(self.csv_path):
-            pd.DataFrame(columns=['idx', 'url', 'embedding']).to_csv(
-                self.csv_path, index=False)
+            with open(self.csv_path, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['idx', 'url', 'embedding'])
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession()
@@ -93,35 +96,53 @@ class AsyncDataLoader:
         dataset = dataset.take(self.end_idx - self.start_idx)
         return dataset
 
-    def save_results(self):
-        """Append results to CSV file"""
+    def append_to_csv(self):
+        """Append current results to CSV file"""
         if not self.results:
-            print("No results to save")
             return
 
-        # Convert results to DataFrame and append to CSV
-        df = pd.DataFrame(self.results)
-        df.to_csv(self.csv_path, mode='a', header=False, index=False)
-        print(f"Appended {len(self.results)} embeddings to {self.csv_path}")
+        with open(self.csv_path, 'a', newline='') as f:
+            writer = csv.writer(f)
+            for result in self.results:
+                writer.writerow([
+                    result['idx'],
+                    result['url'],
+                    ','.join(map(str, result['embedding']))
+                ])
+        
+        self.results = []  # Clear memory after writing
 
-    def finalize_results(self):
-        """Convert final CSV to parquet format"""
+    def convert_to_parquet(self):
+        """Convert the final CSV to parquet format"""
         if not os.path.exists(self.csv_path):
-            print("No CSV file found to convert")
+            print("No results to convert")
             return
 
-        # Read CSV and convert to parquet
-        df = pd.read_csv(self.csv_path)
-        # Convert string representation of list to actual numpy array
-        df['embedding'] = df['embedding'].apply(eval)
+        # Read CSV in chunks to handle large files
+        chunks = pd.read_csv(self.csv_path, 
+                           chunksize=10000,
+                           names=['idx', 'url', 'embedding'],
+                           skiprows=1)
         
-        table = pa.Table.from_pandas(df)
+        # Process first chunk
+        first_chunk = next(chunks)
+        first_chunk['embedding'] = first_chunk['embedding'].apply(
+            lambda x: [float(i) for i in x.split(',')])
+        
+        # Write first chunk to parquet
+        table = pa.Table.from_pandas(first_chunk)
         pq.write_table(table, self.output_path)
-        print(f"Converted CSV to parquet: {self.output_path}")
         
-        # Clean up CSV file
+        # Append remaining chunks
+        for chunk in chunks:
+            chunk['embedding'] = chunk['embedding'].apply(
+                lambda x: [float(i) for i in x.split(',')])
+            table = pa.Table.from_pandas(chunk)
+            pq.write_table(table, self.output_path, append=True)
+        
+        # Clean up intermediate CSV
         os.remove(self.csv_path)
-        print(f"Removed intermediate CSV file: {self.csv_path}")
+        print(f"Successfully converted results to {self.output_path}")
 
     async def process_single_item(self, item, idx: int) -> bool:
         """Process a single item from the dataset"""
@@ -142,6 +163,11 @@ class AsyncDataLoader:
                 "url": item["url"],
                 "embedding": embedding.tolist()
             })
+
+            # Write to CSV if batch size is reached
+            if len(self.results) >= self.batch_size:
+                self.append_to_csv()
+
             return True
         except Exception as e:
             print(f"Error processing item {idx}: {str(e)}")
@@ -152,7 +178,7 @@ class AsyncDataLoader:
         total = self.end_idx - self.start_idx
 
         # Process items in larger chunks for better parallelization
-        chunk_size = 10  # Increased chunk size
+        chunk_size = 10  # Process 10 items concurrently
         tasks = []
 
         with tqdm(total=total, desc="Processing images") as pbar:
@@ -171,15 +197,12 @@ class AsyncDataLoader:
                         pbar.update(1)
                     tasks = []
 
-                    # Save intermediate results to CSV periodically
-                    if len(self.results) >= chunk_size:
-                        self.save_results()
-                        self.results = []  # Clear memory after saving
+        # Write any remaining results to CSV
+        if self.results:
+            self.append_to_csv()
 
-        # Save any remaining results
-        self.save_results()
         # Convert final CSV to parquet
-        self.finalize_results()
+        self.convert_to_parquet()
 
 
 async def main():
