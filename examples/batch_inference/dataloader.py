@@ -13,17 +13,21 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from datasets import load_dataset
 from tqdm import tqdm
+from asyncio import Semaphore
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 class AsyncDataLoader:
     def __init__(self,
                 start_idx: int,
                 end_idx: int,
                 inference_server_url: str = "http://localhost:8000",
-                output_path: str = "embeddings.parquet"):
+                output_path: str = "embeddings.parquet",
+                max_concurrent: int = 50):
         self.start_idx = start_idx
         self.end_idx = end_idx
         self.inference_server_url = inference_server_url
         self.output_path = output_path
+        self.semaphore = Semaphore(max_concurrent)
         self.session = None
         # Store results in memory
         self.results: List[Dict] = []
@@ -36,13 +40,15 @@ class AsyncDataLoader:
         if self.session:
             await self.session.close()
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     async def download_image(self, url: str) -> Optional[str]:
-        """Download image from URL and return raw bytes as base64 string"""
+        """Download image from URL with retry mechanism"""
         try:
-            async with self.session.get(url, timeout=10) as response:
-                if response.status == 200:
-                    data = await response.read()
-                    return base64.b64encode(data).decode()
+            async with self.semaphore:  # Limit concurrent connections
+                async with self.session.get(url, timeout=10, ssl=False) as response:  # Disable SSL verification
+                    if response.status == 200:
+                        data = await response.read()
+                        return base64.b64encode(data).decode()
         except Exception as e:
             print(f"Error downloading image from {url}: {str(e)}")
         return None
@@ -89,28 +95,34 @@ class AsyncDataLoader:
 
     async def process_single_item(self, item, idx: int) -> bool:
         """Process a single item from the dataset"""
-        image_data = await self.download_image(item["url"])
-        if image_data is None:
-            return False
+        try:
+            # Download image first
+            image_data = await self.download_image(item["url"])
+            if image_data is None:
+                return False
 
-        embedding = await self.get_embedding(image_data, idx)
-        if embedding is None:
-            return False
+            # Get embedding in a separate step
+            embedding = await self.get_embedding(image_data, idx)
+            if embedding is None:
+                return False
 
-        # Store result in memory
-        self.results.append({
-            "idx": idx,
-            "url": item["url"],
-            "embedding": embedding.tolist()
-        })
-        return True
+            # Store result
+            self.results.append({
+                "idx": idx,
+                "url": item["url"],
+                "embedding": embedding.tolist()
+            })
+            return True
+        except Exception as e:
+            print(f"Error processing item {idx}: {str(e)}")
+            return False
 
     async def run(self):
         dataset = self.create_dataset()
         total = self.end_idx - self.start_idx
         
-        # Process items concurrently in chunks to control memory usage
-        chunk_size = 100  # Adjust based on memory constraints
+        # Process items in larger chunks for better parallelization
+        chunk_size = 10  # Increased chunk size
         tasks = []
         
         with tqdm(total=total, desc="Processing images") as pbar:
@@ -118,7 +130,6 @@ class AsyncDataLoader:
                 task = asyncio.create_task(self.process_single_item(item, idx))
                 tasks.append(task)
                 
-                # When chunk is full or at the end, wait for completion
                 if len(tasks) >= chunk_size or idx == self.end_idx - 1:
                     results = await asyncio.gather(*tasks, return_exceptions=True)
                     for result in results:
@@ -128,15 +139,20 @@ class AsyncDataLoader:
                             pbar.set_postfix({"status": "error"})
                         pbar.update(1)
                     tasks = []
+                    
+                    # Save intermediate results periodically
+                    if len(self.results) >= chunk_size:
+                        self.save_results()
+                        self.results = []  # Clear memory after saving
         
-        # Save all results at once
+        # Save any remaining results
         self.save_results()
 
 async def main():
     parser = argparse.ArgumentParser(description="Process images and generate CLIP embeddings")
     parser.add_argument("--start-idx", type=int, required=True, help="Starting index in the dataset")
     parser.add_argument("--end-idx", type=int, required=True, help="Ending index in the dataset")
-    parser.add_argument("--server-url", type=str, default="http://localhost:8000", help="Inference server URL")
+    parser.add_argument("--server-url", type=str, default="http://localhost:5005", help="Inference server URL")
     parser.add_argument("--output", type=str, default="embeddings.parquet", help="Output parquet file path")
     
     args = parser.parse_args()
