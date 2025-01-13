@@ -18,7 +18,13 @@ from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_exponential
 from tqdm import tqdm
+import logging
 
+# Add logging setup near the top of the file
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 class AsyncDataLoader:
 
@@ -66,7 +72,7 @@ class AsyncDataLoader:
                         data = await response.read()
                         return base64.b64encode(data).decode()
         except Exception as e:
-            print(f"Error downloading image from {url}: {str(e)}")
+            logging.debug(f"Error downloading image from {url}: {str(e)}")
         return None
 
     async def get_embedding(self, image_data: str,
@@ -83,7 +89,7 @@ class AsyncDataLoader:
                 if result["data"]:
                     return np.array(result["data"][0]["embedding"])
         except Exception as e:
-            print(f"Error getting embedding for index {idx}: {str(e)}")
+            logging.debug(f"Error getting embedding for index {idx}: {str(e)}")
         return None
 
     def create_dataset(self):
@@ -115,7 +121,7 @@ class AsyncDataLoader:
     def convert_to_parquet(self):
         """Convert the final CSV to parquet format"""
         if not os.path.exists(self.csv_path):
-            print("No results to convert")
+            logging.info("No results to convert")
             return
 
         # Read CSV in chunks to handle large files
@@ -142,7 +148,7 @@ class AsyncDataLoader:
         
         # Clean up intermediate CSV
         os.remove(self.csv_path)
-        print(f"Successfully converted results to {self.output_path}")
+        logging.info(f"Successfully converted results to {self.output_path}")
 
     async def process_single_item(self, item, idx: int) -> bool:
         """Process a single item from the dataset"""
@@ -170,7 +176,7 @@ class AsyncDataLoader:
 
             return True
         except Exception as e:
-            print(f"Error processing item {idx}: {str(e)}")
+            logging.error(f"Error processing item {idx}: {str(e)}")
             return False
 
     async def run(self):
@@ -178,8 +184,8 @@ class AsyncDataLoader:
         total = self.end_idx - self.start_idx
 
         # Create queues for download and embedding tasks
-        download_queue = asyncio.Queue(maxsize=100)  # Buffer downloaded images
-        embedding_queue = asyncio.Queue(maxsize=100)  # Buffer images ready for embedding
+        download_queue = asyncio.Queue(maxsize=500)  # Buffer downloaded images
+        embedding_queue = asyncio.Queue(maxsize=500)  # Buffer images ready for embedding
         
         # Create progress bars for each stage
         with tqdm(total=total, desc="Total Progress") as total_pbar, \
@@ -197,7 +203,7 @@ class AsyncDataLoader:
                                 await embedding_queue.put((idx, item["url"], image_data))
                             download_pbar.update(1)
                         except Exception as e:
-                            print(f"Error downloading image {idx}: {str(e)}")
+                            logging.error(f"Error downloading image {idx}: {str(e)}")
                         finally:
                             download_queue.task_done()
                 except asyncio.CancelledError:
@@ -221,7 +227,7 @@ class AsyncDataLoader:
                             embedding_pbar.update(1)
                             total_pbar.update(1)
                         except Exception as e:
-                            print(f"Error processing embedding {idx}: {str(e)}")
+                            logging.error(f"Error processing embedding {idx}: {str(e)}")
                         finally:
                             embedding_queue.task_done()
                 except asyncio.CancelledError:
