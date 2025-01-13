@@ -177,25 +177,83 @@ class AsyncDataLoader:
         dataset = self.create_dataset()
         total = self.end_idx - self.start_idx
 
-        # Process items in larger chunks for better parallelization
-        chunk_size = 10  # Process 10 items concurrently
-        tasks = []
+        # Create queues for download and embedding tasks
+        download_queue = asyncio.Queue(maxsize=100)  # Buffer downloaded images
+        embedding_queue = asyncio.Queue(maxsize=100)  # Buffer images ready for embedding
+        
+        # Create progress bars for each stage
+        with tqdm(total=total, desc="Total Progress") as total_pbar, \
+             tqdm(total=total, desc="Downloads", position=1) as download_pbar, \
+             tqdm(total=total, desc="Embeddings", position=2) as embedding_pbar:
 
-        with tqdm(total=total, desc="Processing images") as pbar:
+            async def download_worker():
+                """Worker to download images and put them in embedding queue"""
+                try:
+                    while True:
+                        idx, item = await download_queue.get()
+                        try:
+                            image_data = await self.download_image(item["url"])
+                            if image_data is not None:
+                                await embedding_queue.put((idx, item["url"], image_data))
+                            download_pbar.update(1)
+                        except Exception as e:
+                            print(f"Error downloading image {idx}: {str(e)}")
+                        finally:
+                            download_queue.task_done()
+                except asyncio.CancelledError:
+                    return
+
+            async def embedding_worker():
+                """Worker to process embeddings from the embedding queue"""
+                try:
+                    while True:
+                        idx, url, image_data = await embedding_queue.get()
+                        try:
+                            embedding = await self.get_embedding(image_data, idx)
+                            if embedding is not None:
+                                self.results.append({
+                                    "idx": idx,
+                                    "url": url,
+                                    "embedding": embedding.tolist()
+                                })
+                                if len(self.results) >= self.batch_size:
+                                    self.append_to_csv()
+                            embedding_pbar.update(1)
+                            total_pbar.update(1)
+                        except Exception as e:
+                            print(f"Error processing embedding {idx}: {str(e)}")
+                        finally:
+                            embedding_queue.task_done()
+                except asyncio.CancelledError:
+                    return
+
+            # Start workers
+            download_workers = [
+                asyncio.create_task(download_worker())
+                for _ in range(50)  # Number of concurrent downloads
+            ]
+            embedding_workers = [
+                asyncio.create_task(embedding_worker())
+                for _ in range(10)  # Number of concurrent embedding processes
+            ]
+
+            # Feed the download queue
             for idx, item in enumerate(dataset, start=self.start_idx):
-                task = asyncio.create_task(self.process_single_item(item, idx))
-                tasks.append(task)
+                await download_queue.put((idx, item))
 
-                if len(tasks) >= chunk_size or idx == self.end_idx - 1:
-                    results = await asyncio.gather(*tasks, return_exceptions=True)
-                    for result in results:
-                        if isinstance(result, bool):
-                            pbar.set_postfix(
-                                {"status": "success" if result else "failed"})
-                        else:
-                            pbar.set_postfix({"status": "error"})
-                        pbar.update(1)
-                    tasks = []
+            # Wait for all downloads to complete
+            await download_queue.join()
+            
+            # Wait for all embeddings to complete
+            await embedding_queue.join()
+
+            # Cancel workers
+            for worker in download_workers + embedding_workers:
+                worker.cancel()
+            
+            # Wait for workers to finish
+            await asyncio.gather(*download_workers, *embedding_workers, 
+                               return_exceptions=True)
 
         # Write any remaining results to CSV
         if self.results:
