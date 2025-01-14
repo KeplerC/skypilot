@@ -1,56 +1,63 @@
-name: clip-batch-inference
+name: carla-batch-simulation
 
 resources:
-  accelerators: {T4:1, A10G:1}
-  memory: 32+
+  accelerators: T4:1  # Using T4 GPU for CARLA
+  memory: 16+
   cloud: aws
-  use_spot: true 
 
 num_nodes: 1
 
 file_mounts:
-  /output:
-    name: kych-clip-embeddings
-    store: S3
+  /results:
+    name: kych-simulation-results
+    store: s3
     mode: MOUNT
 
-envs:
-  HF_TOKEN: ${HF_TOKEN}  
-
-# working directory, you may need to change this to your own path
-workdir: ~/skypilot/examples/batch_inference
+workdir: ~/skypilot/examples/batch_simulation
 
 setup: |
-  # Install required packages
-  pip install numpy==1.26.4
-  pip install torch==2.5.1 torchvision==0.20.1 ftfy regex tqdm
-  pip install datasets webdataset requests Pillow open_clip_torch
-  pip install fastapi uvicorn aiohttp pandas pyarrow tenacity
+  # Install system dependencies
+  sudo apt-get update
+  sudo apt-get install -y python3-pip python3-opencv
+  
+  # Install Python dependencies
+  pip install numpy opencv-python carla filterpy scipy
 
-  # preload the model
-  # python -c "from open_clip import open_clip; open_clip.load('ViT-bigG-14', pretrained='laion2b_s39b_b160k')"
+  # Pull and start CARLA Docker container
+  docker pull carlasim/carla:0.9.15
+  docker run -d \
+    --name=carla \
+    --privileged \
+    --gpus all \
+    --net=host \
+    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    carlasim/carla:0.9.15 \
+    /bin/bash ./CarlaUE4.sh -RenderOffScreen
+
+  # Wait for CARLA to start
+  sleep 10
 
 run: |
-  # Start the inference server in the background
-  python inference_server.py > /output/server.log 2>&1 &
-  SERVER_PID=$!
+  # Get task-specific parameters from environment variables
+  DELTA_K=${DELTA_K}
+  BRAKE_THRESHOLD=${BRAKE_THRESHOLD}
+  CONFIG_TYPE=${CONFIG_TYPE}
+  RUN_NUMBER=${RUN_NUMBER}
+  DIR_NAME=${CONFIG_TYPE}-dk${DELTA_K}-bt${BRAKE_THRESHOLD}-run${RUN_NUMBER}
+  
+  # Create results directory
+  mkdir -p /results/${DIR_NAME}
+  mkdir -p ./monte_carlo_results
+  mkdir -p ./bev_images
 
-  # Wait for server to start
-  echo "Waiting for server to start..."
-  sleep 3
+  # Run simulation
+  python3 carla_simulation.py \
+    --cautious_delta_k ${DELTA_K} \
+    --config_type ${CONFIG_TYPE} \
+    --emergency_brake_threshold ${BRAKE_THRESHOLD} \
+    --output_dir /results/${DIR_NAME}
 
-  # Run the dataloader with specific parameters
-  python ~/sky_workdir/dataloader.py \
-    --start-idx 0 \
-    --end-idx 4000 \
-    --server-url "http://localhost:5005" \
-    --output "/output/embeddings.parquet" 
-
-  # Cleanup: Kill the server process
-  kill $SERVER_PID
-
-  # Wait for server to shutdown gracefully
-  wait $SERVER_PID
-
-  echo "Processing complete. Results saved in node-specific files under /output/"
-  ls -l /output
+  # Copy results
+  cp -r ./monte_carlo_results/* /results/${DIR_NAME}/
+  cp ./collision_probabilities.csv /results/${DIR_NAME}/
+  cp -r ./bev_images/* /results/${DIR_NAME}/

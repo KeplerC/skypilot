@@ -1587,6 +1587,10 @@ def main():
                       help='Value for cautious_delta_k parameter')
     parser.add_argument('--config_type', type=str, choices=['right_turn', 'left_turn', 'merge'],
                       default='merge', help='Type of configuration to use')
+    parser.add_argument('--emergency_brake_threshold', type=float, default=1.1,
+                      help='Threshold for emergency braking')
+    parser.add_argument('--output_dir', type=str, default='./results',
+                      help='Directory to store results')
     args = parser.parse_args()
     
     # Select configuration based on argument
@@ -1597,24 +1601,39 @@ def main():
     }
     
     base_config = config_map[args.config_type]
+    
+    # Update configuration with command line parameters
     if args.cautious_delta_k != -1:
-        # Update configuration with command line parameter
         base_config['simulation']['cautious_delta_k'] = args.cautious_delta_k
         base_config['simulation']['l_max'] = args.cautious_delta_k
         base_config['simulation']['delta_k'] = args.cautious_delta_k
     
+    # Update emergency brake threshold
+    base_config['simulation']['emergency_brake_threshold'] = args.emergency_brake_threshold
+    
+    # Update output paths based on output directory
+    base_config['video']['filename'] = os.path.join(args.output_dir, 'simulation.mp4')
+    base_config['trajectories']['ego'] = os.path.join(args.output_dir, 'ego_trajectory.csv')
+    base_config['trajectories']['obstacle'] = os.path.join(args.output_dir, 'obstacle_trajectory.csv')
+    
+    # Create output directory
+    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, 'bev_images'), exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, 'monte_carlo_results'), exist_ok=True)
+    
     max_retries = 3
     retry_count = 0
     
-    # Setup directories and clean old files
-    if os.path.exists('./bev_images'):
-        shutil.rmtree('./bev_images')
-    os.makedirs('./bev_images')
+    # Clean old files in the output directory
+    if os.path.exists(os.path.join(args.output_dir, 'bev_images')):
+        shutil.rmtree(os.path.join(args.output_dir, 'bev_images'))
+    os.makedirs(os.path.join(args.output_dir, 'bev_images'))
     
-    if os.path.exists('./collision_probabilities.csv'):
-        os.remove('./collision_probabilities.csv')
+    collision_prob_file = os.path.join(args.output_dir, 'collision_probabilities.csv')
+    if os.path.exists(collision_prob_file):
+        os.remove(collision_prob_file)
     
-    # Base configuration
+    # Base configuration for Monte Carlo simulation
     num_samples = 1
     
     while retry_count < max_retries:
@@ -1626,11 +1645,17 @@ def main():
             collision_rate = stats['num_collisions'] / num_samples
             
             # Save results
-            with open('./monte_carlo_results/statistics.txt', 'w') as f:
+            stats_file = os.path.join(args.output_dir, 'monte_carlo_results', 'statistics.txt')
+            with open(stats_file, 'w') as f:
                 f.write(f"Monte Carlo Simulation Results\n")
-                f.write(f"Number of samples: {num_samples}\n")
-                f.write(f"Number of collisions: {stats['num_collisions']}\n")
-                f.write(f"Collision rate: {collision_rate:.2%}\n\n")
+                f.write(f"Configuration:\n")
+                f.write(f"  Config Type: {args.config_type}\n")
+                f.write(f"  Cautious Delta K: {base_config['simulation']['cautious_delta_k']}\n")
+                f.write(f"  Emergency Brake Threshold: {base_config['simulation']['emergency_brake_threshold']}\n\n")
+                f.write(f"Results:\n")
+                f.write(f"  Number of samples: {num_samples}\n")
+                f.write(f"  Number of collisions: {stats['num_collisions']}\n")
+                f.write(f"  Collision rate: {collision_rate:.2%}\n\n")
                 
                 f.write("Collision cases:\n")
                 for case in stats['collision_cases']:
@@ -1643,7 +1668,7 @@ def main():
             
             print(f"\nMonte Carlo simulation completed.")
             print(f"Collision rate: {collision_rate:.2%} ({stats['num_collisions']}/{num_samples} collisions)")
-            print(f"Results saved to ./monte_carlo_results/")
+            print(f"Results saved to {args.output_dir}")
             break
             
         except Exception as e:
