@@ -748,7 +748,7 @@ def run_first_simulation(config, trajectory_file=None):
         client.reload_world()
         world.apply_settings(original_settings)
 
-def run_simulation(config):
+def run_simulation(config, output_dir):
     """Run a simulation with the given configuration using pre-recorded trajectory"""
     # Connect to CARLA
     client = carla.Client(config['simulation']['host'], config['simulation']['port'])
@@ -869,12 +869,12 @@ def run_simulation(config):
     collision_sensor.listen(collision_callback)
 
     # Add CSV setup for collision probability logging
-    collision_prob_file = './collision_probabilities.csv'
+    collision_prob_file = os.path.join(output_dir, 'collision_probabilities.csv')
     
     if os.path.exists(collision_prob_file):
         pass 
     else:   
-        with open(collision_prob_file, 'w') as f:
+        with open(os.path.join(output_dir, 'collision_probabilities.csv'), 'w') as f:
             f.write('timestamp,tick,delta_k,collision_probability\n')
 
     try:
@@ -969,7 +969,7 @@ def run_simulation(config):
 
             # After calculating collision_prob and collision_time
             timestamp = tick * config['simulation']['delta_seconds']
-            with open(collision_prob_file, 'a') as f:
+            with open(os.path.join(output_dir, 'collision_probabilities.csv'), 'a') as f:
                 f.write(f'{timestamp:.2f},{tick},{config["simulation"]["delta_k"]},{collision_prob:.4f}\n')
 
     finally:
@@ -995,7 +995,7 @@ def run_simulation(config):
         # print(f"Video saved to {config['video']['filename']}")
 
 
-def run_adaptive_simulation(config):
+def run_adaptive_simulation(config, output_dir):
     """Run a simulation with adaptive delta_k and braking based on collision probability"""
     # Connect to CARLA
     client = carla.Client(config['simulation']['host'], config['simulation']['port'])
@@ -1112,7 +1112,7 @@ def run_adaptive_simulation(config):
     collision_sensor.listen(collision_callback)
 
     # Setup CSV logging
-    collision_prob_file = './collision_probabilities.csv'
+    collision_prob_file = os.path.join(output_dir, 'collision_probabilities.csv')
     if not os.path.exists(collision_prob_file):
         with open(collision_prob_file, 'w') as f:
             f.write('timestamp,tick,delta_k,collision_probability,ground_truth_probability\n')
@@ -1281,7 +1281,7 @@ def run_adaptive_simulation(config):
                 if config['save_options']['save_video']:
                     video_writer.write(frame_bgr)
                 if config['save_options']['save_images']:
-                    cv2.imwrite(f"./bev_images/frame_{tick}.png", frame_bgr)
+                    cv2.imwrite(os.path.join(output_dir, 'bev_images/frame_{tick}.png').format(tick=tick), frame_bgr)
 
             # Log data
             timestamp = tick * config['simulation']['delta_seconds']
@@ -1425,7 +1425,7 @@ def calculate_collision_probabilities(obstacle_tracker, predicted_positions, ego
     
     return max_collision_prob, collision_time, collision_probabilities
 
-def get_monte_carlo_spawn_point(config, ego_spawn_point, std_dev=1):
+def get_monte_carlo_spawn_point(config, ego_spawn_point, std_dev=0.5):
     """
     Generate a randomized spawn point for the obstacle vehicle using Monte Carlo sampling.
     
@@ -1515,7 +1515,7 @@ def run_monte_carlo_simulation(config, num_samples=10, output_dir='./results'):
             run_first_simulation(sample_config)
             
             # Run simulation and check for collision
-            has_collided, current_delta_k = run_adaptive_simulation(sample_config)
+            has_collided, current_delta_k = run_adaptive_simulation(sample_config, output_dir)
             
             # Check if collision occurred
             if has_collided:
@@ -1545,7 +1545,13 @@ def run_monte_carlo_simulation(config, num_samples=10, output_dir='./results'):
             with open(os.path.join(output_dir, 'monte_carlo_results/statistics.csv'), 'w') as f:
                 f.write(f"scenario,lmax,delta_k,collision,delta_k_used\n")
         # save and append the stats to a csv file
-        with open(os.path.join(output_dir, 'monte_carlo_results/statistics.csv'), 'a') as f:
+        # with open(os.path.join(output_dir, 'monte_carlo_results/statistics.csv'), 'a') as f:
+        # doesn't support 'a', read and write instead 
+        with open(os.path.join(output_dir, 'monte_carlo_results/statistics.csv'), 'r') as f:
+            lines = f.readlines()
+        with open(os.path.join(output_dir, 'monte_carlo_results/statistics.csv'), 'w') as f:
+            for line in lines:
+                f.write(line)
             # scenario, lmax, delta_k, collision yes or no, delta_k_used
             scenario_type = config['video']['filename'].split('/')[-1].split('_collision')[0]
             f.write(f"{scenario_type},{config['simulation']['l_max']},{current_delta_k},{has_collided},{config['simulation']['delta_k']}\n")

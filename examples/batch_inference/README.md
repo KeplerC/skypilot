@@ -2,8 +2,8 @@
 
 To run the experiments 
 ```
-sky launch clip.yaml
-sky jobs launch clip.yaml
+sky launch clip.yaml --env-file ~/.env
+sky jobs launch clip.yaml --env-file ~/.env
 ```
 
 To construct the database from embeddings: 
@@ -19,7 +19,7 @@ python build_vectordb.py \
 To query the constructed database: 
 ```
 python query_vectordb.py \
-  --text "a photo of a black and white cat" \
+  --text "a photo of cloud" \
   --collection-name clip_embeddings \
   --persist-dir /tmp/chroma_db \
   --n-results 5

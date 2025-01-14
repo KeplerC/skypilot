@@ -6,15 +6,15 @@ import sky
 
 def main():
     parser = argparse.ArgumentParser(description='Launch batch CARLA simulations')
-    parser.add_argument('--delta_k_values', type=int, nargs='+', default=[20],
+    parser.add_argument('--delta_k_values', type=int, nargs='+', default=[40],
                       help='List of delta_k values to test')
     parser.add_argument('--brake_threshold_values', type=float, nargs='+', 
-                      default=[0.3],
+                      default=[1.1],
                       help='List of emergency brake threshold values to test')
     parser.add_argument('--config_types', type=str, nargs='+', 
-                      default=['right_turn'],
+                      default=['right_turn', 'left_turn'],
                       help='List of configuration types to test')
-    parser.add_argument('--num_runs', type=int, default=100,
+    parser.add_argument('--num_runs', type=int, default=10,
                       help='Number of runs per configuration')
     args = parser.parse_args()
 
@@ -35,9 +35,9 @@ def main():
                 })
                 
                 # Launch the job
-                sky.jobs.launch(
+                sky.launch(
                     task,
-                    name=f'carla-sim-{config_type}-dk{delta_k}-bt{brake_threshold}',
+                    # name=f'carla-sim-{config_type}-dk{delta_k}-bt{brake_threshold}',
                     detach_run=True,
                     retry_until_up=True,
                 )

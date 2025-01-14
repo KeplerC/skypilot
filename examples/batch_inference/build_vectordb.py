@@ -7,6 +7,7 @@ from tqdm import tqdm
 import argparse
 import logging
 from io import BytesIO
+import shutil
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -57,7 +58,8 @@ def main():
     parser.add_argument('--batch-size', type=int, default=1000, help='Batch size for processing')
     
     args = parser.parse_args()
-    
+    if os.path.exists(args.persist_dir):
+        shutil.rmtree(args.persist_dir)
     # Initialize ChromaDB
     client = chromadb.PersistentClient(path=args.persist_dir)
     

@@ -3,7 +3,6 @@ name: carla-batch-simulation
 resources:
   accelerators: T4:1  # Using T4 GPU for CARLA
   memory: 16+
-  cloud: aws
   use_spot: true
 
 num_nodes: 1
@@ -57,7 +56,12 @@ run: |
     TRIAL_DIR=${BASE_DIR}/run${RUN_NUMBER}
     mkdir -p ${TRIAL_DIR}
     
-    # Run simulation
+    echo "running command: python3 carla_simulation.py \
+      --cautious_delta_k ${DELTA_K} \
+      --config_type ${CONFIG_TYPE} \
+      --emergency_brake_threshold ${BRAKE_THRESHOLD} \
+      --output_dir ${TRIAL_DIR}"
+    
     python3 carla_simulation.py \
       --cautious_delta_k ${DELTA_K} \
       --config_type ${CONFIG_TYPE} \
