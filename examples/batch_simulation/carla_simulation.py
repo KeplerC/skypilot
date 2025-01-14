@@ -1454,7 +1454,7 @@ def get_monte_carlo_spawn_point(config, ego_spawn_point, std_dev=1):
     
     return spawn_point
 
-def run_monte_carlo_simulation(config, num_samples=10):
+def run_monte_carlo_simulation(config, num_samples=10, output_dir='./results'):
     """
     Run multiple simulations with Monte Carlo sampling of obstacle spawn points.
     
@@ -1541,11 +1541,11 @@ def run_monte_carlo_simulation(config, num_samples=10):
             if os.path.exists(trajectory_file):
                 os.remove(trajectory_file)
                 
-        if not os.path.exists('./monte_carlo_results/statistics.csv'):
-            with open('./monte_carlo_results/statistics.csv', 'w') as f:
+        if not os.path.exists(os.path.join(output_dir, 'monte_carlo_results/statistics.csv')):
+            with open(os.path.join(output_dir, 'monte_carlo_results/statistics.csv'), 'w') as f:
                 f.write(f"scenario,lmax,delta_k,collision,delta_k_used\n")
         # save and append the stats to a csv file
-        with open('./monte_carlo_results/statistics.csv', 'a') as f:
+        with open(os.path.join(output_dir, 'monte_carlo_results/statistics.csv'), 'a') as f:
             # scenario, lmax, delta_k, collision yes or no, delta_k_used
             scenario_type = config['video']['filename'].split('/')[-1].split('_collision')[0]
             f.write(f"{scenario_type},{config['simulation']['l_max']},{current_delta_k},{has_collided},{config['simulation']['delta_k']}\n")
@@ -1639,7 +1639,7 @@ def main():
     while retry_count < max_retries:
         try:
             # Run Monte Carlo simulation
-            stats = run_monte_carlo_simulation(base_config, num_samples)
+            stats = run_monte_carlo_simulation(base_config, num_samples, args.output_dir)
             
             # Calculate and save statistics
             collision_rate = stats['num_collisions'] / num_samples

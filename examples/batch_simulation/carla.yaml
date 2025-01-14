@@ -4,6 +4,7 @@ resources:
   accelerators: T4:1  # Using T4 GPU for CARLA
   memory: 16+
   cloud: aws
+  use_spot: true
 
 num_nodes: 1
 
@@ -42,22 +43,28 @@ run: |
   DELTA_K=${DELTA_K}
   BRAKE_THRESHOLD=${BRAKE_THRESHOLD}
   CONFIG_TYPE=${CONFIG_TYPE}
-  RUN_NUMBER=${RUN_NUMBER}
-  DIR_NAME=${CONFIG_TYPE}-dk${DELTA_K}-bt${BRAKE_THRESHOLD}-run${RUN_NUMBER}
+  NUM_RUNS=${NUM_RUNS}
   
-  # Create results directory
-  mkdir -p /results/${DIR_NAME}
-  mkdir -p ./monte_carlo_results
-  mkdir -p ./bev_images
-
-  # Run simulation
-  python3 carla_simulation.py \
-    --cautious_delta_k ${DELTA_K} \
-    --config_type ${CONFIG_TYPE} \
-    --emergency_brake_threshold ${BRAKE_THRESHOLD} \
-    --output_dir /results/${DIR_NAME}
-
-  # Copy results
-  cp -r ./monte_carlo_results/* /results/${DIR_NAME}/
-  cp ./collision_probabilities.csv /results/${DIR_NAME}/
-  cp -r ./bev_images/* /results/${DIR_NAME}/
+  # Create base results directory
+  BASE_DIR=/results/${CONFIG_TYPE}-dk${DELTA_K}-bt${BRAKE_THRESHOLD}
+  mkdir -p ${BASE_DIR}
+  
+  # Run multiple trials
+  for RUN_NUMBER in $(seq 1 ${NUM_RUNS}); do
+    echo "Starting trial ${RUN_NUMBER}/${NUM_RUNS}"
+    
+    # Create trial-specific directories
+    TRIAL_DIR=${BASE_DIR}/run${RUN_NUMBER}
+    mkdir -p ${TRIAL_DIR}
+    
+    # Run simulation
+    python3 carla_simulation.py \
+      --cautious_delta_k ${DELTA_K} \
+      --config_type ${CONFIG_TYPE} \
+      --emergency_brake_threshold ${BRAKE_THRESHOLD} \
+      --output_dir ${TRIAL_DIR}
+    
+    # Optional: restart CARLA between trials to ensure clean state
+    docker restart carla
+    sleep 5
+  done
