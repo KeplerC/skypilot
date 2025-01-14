@@ -1,0 +1,56 @@
+name: clip-batch-inference
+
+resources:
+  accelerators: {T4:1, A10G:1}
+  memory: 32+
+  cloud: aws
+  use_spot: true 
+
+num_nodes: 1
+
+file_mounts:
+  /output:
+    name: kych-clip-embeddings
+    store: S3
+    mode: MOUNT
+
+envs:
+  HF_TOKEN: ${HF_TOKEN}  
+
+# working directory, you may need to change this to your own path
+workdir: ~/skypilot/examples/batch_inference
+
+setup: |
+  # Install required packages
+  pip install numpy==1.26.4
+  pip install torch==2.5.1 torchvision==0.20.1 ftfy regex tqdm
+  pip install datasets webdataset requests Pillow open_clip_torch
+  pip install fastapi uvicorn aiohttp pandas pyarrow tenacity
+
+  # preload the model
+  # python -c "from open_clip import open_clip; open_clip.load('ViT-bigG-14', pretrained='laion2b_s39b_b160k')"
+
+run: |
+  # Start the inference server in the background
+  python inference_server.py > /output/server.log 2>&1 &
+  SERVER_PID=$!
+
+  # Wait for server to start
+  echo "Waiting for server to start..."
+  sleep 3
+
+  # Run the dataloader with specific parameters
+  python ~/sky_workdir/dataloader.py \
+    --start-idx 0 \
+    --end-idx 4000 \
+    --server-url "http://localhost:5005" \
+    --output "/output/embeddings.parquet" 
+
+  # Cleanup: Kill the server process
+  kill $SERVER_PID
+
+  # Wait for server to shutdown gracefully
+  wait $SERVER_PID
+
+  echo "Processing complete. Results saved in node-specific files under /output/"
+  ls -l /output
