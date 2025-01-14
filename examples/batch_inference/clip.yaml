@@ -1,11 +1,12 @@
 name: clip-batch-inference
 
 resources:
-  accelerators: T4:1  # Use 1 T4 GPU
+  accelerators: {T4:1, A10G:1}
   memory: 32+
   cloud: aws
+  use_spot: true 
 
-num_nodes: 4
+num_nodes: 1
 
 file_mounts:
   /output:
@@ -27,7 +28,7 @@ setup: |
   pip install fastapi uvicorn aiohttp pandas pyarrow tenacity
 
   # preload the model
-  python -c "from open_clip_torch import open_clip; open_clip.load('ViT-bigG-14', pretrained='laion2b_s39b_b160k')"
+  python -c "from open_clip import open_clip; open_clip.load('ViT-bigG-14', pretrained='laion2b_s39b_b160k')"
 
 run: |
   # Start the inference server in the background
