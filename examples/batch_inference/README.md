@@ -12,7 +12,7 @@ python build_vectordb.py \
   --bucket kych-clip-embeddings \
   --prefix embeddings \
   --collection-name clip_embeddings \
-  --persist-dir ./chroma_db \
+  --persist-dir /tmp/chroma_db \
   --batch-size 1000
 ```
 
@@ -21,6 +21,6 @@ To query the constructed database:
 python query_vectordb.py \
   --text "a photo of a black and white cat" \
   --collection-name clip_embeddings \
-  --persist-dir ./chroma_db \
+  --persist-dir /tmp/chroma_db \
   --n-results 5
 ```
