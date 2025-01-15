@@ -35,9 +35,9 @@ def main():
                 })
                 
                 # Launch the job
-                sky.launch(
+                sky.jobs.launch(
                     task,
-                    # name=f'carla-sim-{config_type}-dk{delta_k}-bt{brake_threshold}',
+                    name=f'carla-sim-{config_type}-dk{delta_k}-bt{brake_threshold}',
                     detach_run=True,
                     retry_until_up=True,
                 )

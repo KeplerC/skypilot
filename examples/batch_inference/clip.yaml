@@ -7,7 +7,7 @@ resources:
     - use_spot: true 
     - use_spot: false
 
-num_nodes: 10
+num_nodes: 1
 
 file_mounts:
   /output:
@@ -43,9 +43,10 @@ run: |
   # Run the dataloader with specific parameters
   python ~/sky_workdir/dataloader.py \
     --start-idx 0 \
-    --end-idx 500000 \
+    --end-idx 10000 \
     --server-url "http://localhost:5005" \
-    --output "/output/embeddings.parquet" 
+    --output "/output/embeddings.parquet" \
+    --csv-path "/output/intermediate.csv"
 
   # Cleanup: Kill the server process
   kill $SERVER_PID

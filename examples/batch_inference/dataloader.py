@@ -69,11 +69,12 @@ class AsyncDataLoader:
         self.batch_size = 50  # Write to CSV every 100 items
 
         # Create CSV file with headers if it doesn't exist
-        if os.path.exists(self.csv_path):
+        try:
             self.results = pd.read_csv(self.csv_path).to_dict(orient='records')
-            self.start_idx = max(self.start_idx, self.results[-1]['idx'] + 1)
+            self.start_idx = list(self.results[-1].values())[0]
             logging.info(f"Resuming from index {self.start_idx} based on existing output")
-        else:
+        except Exception as e:
+            logging.info(f"No existing output found, starting from index {self.start_idx}")
             with open(self.csv_path, 'w', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(['idx', 'url', 'embedding'])
@@ -134,7 +135,14 @@ class AsyncDataLoader:
         if not self.results:
             return
 
-        with open(self.csv_path, 'a', newline='') as f:
+        # Read existing content
+        existing_rows = []
+        if os.path.exists(self.csv_path):
+            with open(self.csv_path, 'r', newline='') as f:
+                existing_rows = list(csv.reader(f))
+        
+        # Write all content
+        with open(self.csv_path, 'w', newline='') as f:
             writer = csv.writer(f)
             for result in self.results:
                 writer.writerow([
@@ -232,11 +240,11 @@ class AsyncDataLoader:
         dataset = self.create_dataset()
         total = self.end_idx - self.start_idx
 
-        # Create queues for download and embedding tasks
-        download_queue = asyncio.Queue(maxsize=500)  # Buffer downloaded images
-        embedding_queue = asyncio.Queue(maxsize=500)  # Buffer images ready for embedding
+        # Create queues for download, embedding, and writing tasks
+        download_queue = asyncio.Queue(maxsize=500)
+        embedding_queue = asyncio.Queue(maxsize=500)
+        write_queue = asyncio.Queue(maxsize=500)  # New queue for writing results
         
-        # Create progress bars for each stage
         with tqdm(total=total, desc="Total Progress") as total_pbar, \
              tqdm(total=total, desc="Downloads", position=1) as download_pbar, \
              tqdm(total=total, desc="Embeddings", position=2) as embedding_pbar:
@@ -266,14 +274,12 @@ class AsyncDataLoader:
                         batch = []
                         batch_size = self.batch_size
                         
-                        # Get first item
                         try:
                             item = await embedding_queue.get()
                             batch.append(item)
                         except asyncio.QueueEmpty:
                             continue
 
-                        # Try to fill batch
                         while len(batch) < batch_size:
                             try:
                                 item = embedding_queue.get_nowait()
@@ -282,59 +288,89 @@ class AsyncDataLoader:
                                 break
                         
                         try:
-                            # Process batch
                             results = await self.get_embeddings_batch(batch)
                             for idx, url, embedding in results:
                                 if embedding is not None:
-                                    self.results.append({
+                                    # Instead of storing in self.results, send to write queue
+                                    await write_queue.put({
                                         "idx": idx,
                                         "url": url,
                                         "embedding": embedding.tolist()
                                     })
-                                    if len(self.results) >= self.batch_size:
-                                        self.append_to_csv()
                                 embedding_pbar.update(1)
                                 total_pbar.update(1)
                         except Exception as e:
                             logging.error(f"Error processing batch: {str(e)}")
                         finally:
-                            # Mark all batch items as done
                             for _ in batch:
                                 embedding_queue.task_done()
                 except asyncio.CancelledError:
                     return
 
+            async def csv_writer():
+                """Dedicated worker for writing results to CSV"""
+                try:
+                    results_buffer = []
+                    while True:
+                        try:
+                            result = await write_queue.get()
+                            results_buffer.append(result)
+                            
+                            if len(results_buffer) >= self.batch_size:
+                                # Write to CSV
+                                with open(self.csv_path, 'a', newline='') as f:
+                                    writer = csv.writer(f)
+                                    for r in results_buffer:
+                                        writer.writerow([
+                                            r['idx'],
+                                            r['url'],
+                                            ','.join(map(str, r['embedding']))
+                                        ])
+                                results_buffer = []
+                        except Exception as e:
+                            logging.error(f"Error writing to CSV: {str(e)}")
+                        finally:
+                            write_queue.task_done()
+                except asyncio.CancelledError:
+                    # Write any remaining results before exiting
+                    if results_buffer:
+                        with open(self.csv_path, 'a', newline='') as f:
+                            writer = csv.writer(f)
+                            for r in results_buffer:
+                                writer.writerow([
+                                    r['idx'],
+                                    r['url'],
+                                    ','.join(map(str, r['embedding']))
+                                ])
+                    return
+
             # Start workers
             download_workers = [
                 asyncio.create_task(download_worker())
-                for _ in range(100)  # Number of concurrent downloads
+                for _ in range(100)
             ]
             embedding_workers = [
                 asyncio.create_task(embedding_worker())
-                for _ in range(50)  # Number of concurrent embedding processes
+                for _ in range(50)
             ]
+            csv_writer_task = asyncio.create_task(csv_writer())  # Single CSV writer
 
             # Feed the download queue
             for idx, item in enumerate(dataset, start=self.start_idx):
                 await download_queue.put((idx, item))
 
-            # Wait for all downloads to complete
+            # Wait for all queues to complete
             await download_queue.join()
-            
-            # Wait for all embeddings to complete
             await embedding_queue.join()
+            await write_queue.join()
 
-            # Cancel workers
-            for worker in download_workers + embedding_workers:
+            # Cancel all workers
+            for worker in download_workers + embedding_workers + [csv_writer_task]:
                 worker.cancel()
             
             # Wait for workers to finish
-            await asyncio.gather(*download_workers, *embedding_workers, 
+            await asyncio.gather(*download_workers, *embedding_workers, csv_writer_task,
                                return_exceptions=True)
-
-        # Write any remaining results to CSV
-        if self.results:
-            self.append_to_csv()
 
         # Convert final CSV to parquet
         self.convert_to_parquet()
@@ -359,6 +395,10 @@ async def main():
                         type=str,
                         default="embeddings.parquet",
                         help="Output parquet file path")
+    parser.add_argument("--csv-path",
+                        type=str,
+                        default="intermediate.csv",
+                        help="Intermediate CSV file path")
 
     args = parser.parse_args()
 
@@ -373,6 +413,11 @@ async def main():
         base, ext = os.path.splitext(args.output)
         output_path = f"{base}_node{NODE_RANK}{ext}"
     
+    csv_path = args.csv_path
+    if NUM_NODES > 1:
+        base, ext = os.path.splitext(csv_path)
+        csv_path = f"{base}_node{NODE_RANK}{ext}"
+    
     logging.info(f"Node {NODE_RANK}/{NUM_NODES} processing range [{node_start}, {node_end})")
     logging.info(f"Output will be saved to: {output_path}")
 
@@ -381,7 +426,8 @@ async def main():
     async with AsyncDataLoader(start_idx=node_start,
                              end_idx=node_end,
                              inference_server_url=args.server_url,
-                             output_path=output_path) as loader:
+                             output_path=output_path,
+                             csv_path=csv_path) as loader:
         await loader.run()
 
 

@@ -1,5 +1,10 @@
 
 
+Setup Huggingface token in `~/.env`
+```
+HF_TOKEN=hf_xxxxx
+```
+
 To run the experiments 
 ```
 sky launch clip.yaml --env-file ~/.env
