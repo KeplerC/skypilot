@@ -317,9 +317,22 @@ class AsyncDataLoader:
                             results_buffer.append(result)
                             
                             if len(results_buffer) >= self.batch_size:
-                                # Write to CSV
-                                with open(self.csv_path, 'a', newline='') as f:
+                                # Read existing content
+                                existing_rows = []
+                                if os.path.exists(self.csv_path):
+                                    with open(self.csv_path, 'r', newline='') as f:
+                                        reader = csv.reader(f)
+                                        existing_rows = list(reader)
+                                
+                                # Write all content
+                                with open(self.csv_path, 'w', newline='') as f:
                                     writer = csv.writer(f)
+                                    # Write header if it's a new file
+                                    if not existing_rows:
+                                        writer.writerow(['idx', 'url', 'embedding'])
+                                    else:
+                                        writer.writerows(existing_rows[1:])  # Skip header
+                                    # Write new results
                                     for r in results_buffer:
                                         writer.writerow([
                                             r['idx'],
@@ -334,8 +347,18 @@ class AsyncDataLoader:
                 except asyncio.CancelledError:
                     # Write any remaining results before exiting
                     if results_buffer:
-                        with open(self.csv_path, 'a', newline='') as f:
+                        existing_rows = []
+                        if os.path.exists(self.csv_path):
+                            with open(self.csv_path, 'r', newline='') as f:
+                                reader = csv.reader(f)
+                                existing_rows = list(reader)
+                        
+                        with open(self.csv_path, 'w', newline='') as f:
                             writer = csv.writer(f)
+                            if not existing_rows:
+                                writer.writerow(['idx', 'url', 'embedding'])
+                            else:
+                                writer.writerows(existing_rows[1:])  # Skip header
                             for r in results_buffer:
                                 writer.writerow([
                                     r['idx'],

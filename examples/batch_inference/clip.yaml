@@ -16,7 +16,9 @@ file_mounts:
     mode: MOUNT
 
 envs:
-  HF_TOKEN: ${HF_TOKEN}  
+  HF_TOKEN: ${HF_TOKEN}
+  START_IDX: ${START_IDX}
+  END_IDX: ${END_IDX}
 
 # working directory, you may need to change this to your own path
 workdir: ~/skypilot/examples/batch_inference
@@ -42,11 +44,11 @@ run: |
 
   # Run the dataloader with specific parameters
   python ~/sky_workdir/dataloader.py \
-    --start-idx 0 \
-    --end-idx 10000 \
+    --start-idx ${START_IDX} \
+    --end-idx ${END_IDX} \
     --server-url "http://localhost:5005" \
-    --output "/output/embeddings.parquet" \
-    --csv-path "/output/intermediate.csv"
+    --output "/output/embeddings_${START_IDX}_${END_IDX}.parquet" \
+    --csv-path "/output/intermediate_${START_IDX}_${END_IDX}.csv"
 
   # Cleanup: Kill the server process
   kill $SERVER_PID

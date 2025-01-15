@@ -3,8 +3,12 @@
 import argparse
 import os
 import sky
+from dotenv import load_dotenv
 
 def main():
+    # Load environment variables from ~/.env
+    load_dotenv(os.path.expanduser('~/.env'))
+    
     parser = argparse.ArgumentParser(description='Launch batch CARLA simulations')
     parser.add_argument('--delta_k_values', type=int, nargs='+', default=[40],
                       help='List of delta_k values to test')
@@ -21,6 +25,11 @@ def main():
     # Load the task template
     task = sky.Task.from_yaml('carla.yaml')
 
+    # Get HF_TOKEN from environment
+    hf_token = os.getenv('HF_TOKEN')
+    if not hf_token:
+        raise ValueError("HF_TOKEN not found in ~/.env")
+
     # Launch jobs for each parameter combination
     job_idx = 1
     for config_type in args.config_types:
@@ -31,7 +40,8 @@ def main():
                     'DELTA_K': delta_k,
                     'BRAKE_THRESHOLD': brake_threshold,
                     'CONFIG_TYPE': config_type,
-                    'NUM_RUNS': args.num_runs
+                    'NUM_RUNS': args.num_runs,
+                    'HF_TOKEN': hf_token  # Add HF_TOKEN to environment variables
                 })
                 
                 # Launch the job
