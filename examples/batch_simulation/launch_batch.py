@@ -12,7 +12,7 @@ def main():
                       default=[1.1],
                       help='List of emergency brake threshold values to test')
     parser.add_argument('--config_types', type=str, nargs='+', 
-                      default=['right_turn', 'left_turn'],
+                      default=['right_turn'],
                       help='List of configuration types to test')
     parser.add_argument('--num_runs', type=int, default=10,
                       help='Number of runs per configuration')

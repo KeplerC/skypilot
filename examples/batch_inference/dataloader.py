@@ -66,7 +66,7 @@ class AsyncDataLoader:
         self.session = None
         # Store a small batch of results in memory before writing to CSV
         self.results: List[Dict] = []
-        self.batch_size = 100  # Write to CSV every 100 items
+        self.batch_size = 50  # Write to CSV every 100 items
 
         # Create CSV file with headers if it doesn't exist
         if not os.path.exists(self.csv_path):
@@ -202,6 +202,28 @@ class AsyncDataLoader:
             logging.error(f"Error processing item {idx}: {str(e)}")
             return False
 
+    async def get_embeddings_batch(self, batch_data: List[Tuple[int, str, str]]) -> List[Tuple[int, str, Optional[np.ndarray]]]:
+        """Get CLIP embeddings for a batch of images"""
+        try:
+            # Prepare batch input
+            inputs = [{"input": image_data, "model": "ViT-bigG-14"} for _, _, image_data in batch_data]
+            
+            async with self.session.post(
+                    f"{self.inference_server_url}/v1/embeddings/batch",
+                    json={"inputs": inputs}) as response:
+                result = await response.json()
+                
+                # Process results maintaining order
+                processed_results = []
+                for (idx, url, _), embedding_result in zip(batch_data, result.get("data", [])):
+                    embedding = np.array(embedding_result["embedding"]) if embedding_result else None
+                    processed_results.append((idx, url, embedding))
+                return processed_results
+        except Exception as e:
+            logging.error(f"Error getting batch embeddings: {str(e)}")
+            # Return None embeddings for all items in batch
+            return [(idx, url, None) for idx, url, _ in batch_data]
+
     async def run(self):
         dataset = self.create_dataset()
         total = self.end_idx - self.start_idx
@@ -233,37 +255,59 @@ class AsyncDataLoader:
                     return
 
             async def embedding_worker():
-                """Worker to process embeddings from the embedding queue"""
+                """Worker to process embeddings from the embedding queue in batches"""
                 try:
                     while True:
-                        idx, url, image_data = await embedding_queue.get()
+                        # Collect batch of items
+                        batch = []
+                        batch_size = self.batch_size
+                        
+                        # Get first item
                         try:
-                            embedding = await self.get_embedding(image_data, idx)
-                            if embedding is not None:
-                                self.results.append({
-                                    "idx": idx,
-                                    "url": url,
-                                    "embedding": embedding.tolist()
-                                })
-                                if len(self.results) >= self.batch_size:
-                                    self.append_to_csv()
-                            embedding_pbar.update(1)
-                            total_pbar.update(1)
+                            item = await embedding_queue.get()
+                            batch.append(item)
+                        except asyncio.QueueEmpty:
+                            continue
+
+                        # Try to fill batch
+                        while len(batch) < batch_size:
+                            try:
+                                item = embedding_queue.get_nowait()
+                                batch.append(item)
+                            except asyncio.QueueEmpty:
+                                break
+                        
+                        try:
+                            # Process batch
+                            results = await self.get_embeddings_batch(batch)
+                            for idx, url, embedding in results:
+                                if embedding is not None:
+                                    self.results.append({
+                                        "idx": idx,
+                                        "url": url,
+                                        "embedding": embedding.tolist()
+                                    })
+                                    if len(self.results) >= self.batch_size:
+                                        self.append_to_csv()
+                                embedding_pbar.update(1)
+                                total_pbar.update(1)
                         except Exception as e:
-                            logging.error(f"Error processing embedding {idx}: {str(e)}")
+                            logging.error(f"Error processing batch: {str(e)}")
                         finally:
-                            embedding_queue.task_done()
+                            # Mark all batch items as done
+                            for _ in batch:
+                                embedding_queue.task_done()
                 except asyncio.CancelledError:
                     return
 
             # Start workers
             download_workers = [
                 asyncio.create_task(download_worker())
-                for _ in range(50)  # Number of concurrent downloads
+                for _ in range(100)  # Number of concurrent downloads
             ]
             embedding_workers = [
                 asyncio.create_task(embedding_worker())
-                for _ in range(10)  # Number of concurrent embedding processes
+                for _ in range(50)  # Number of concurrent embedding processes
             ]
 
             # Feed the download queue

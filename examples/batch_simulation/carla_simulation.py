@@ -808,7 +808,7 @@ def run_simulation(config, output_dir):
     if obstacle_vehicle is not None:
         obstacle_vehicle.set_autopilot(False)
 
-    # Attach a top-down BEV camera above the intersection or ego vehicle’s start
+    # Attach a top-down BEV camera above the intersection or ego vehicle's start
     camera_bp = blueprint_library.find('sensor.camera.rgb')
     camera_bp.set_attribute('image_size_x', str(config['video']['width']))
     camera_bp.set_attribute('image_size_y', str(config['video']['height']))
@@ -969,7 +969,7 @@ def run_simulation(config, output_dir):
 
             # After calculating collision_prob and collision_time
             timestamp = tick * config['simulation']['delta_seconds']
-            with open(os.path.join(output_dir, 'collision_probabilities.csv'), 'a') as f:
+            with open(collision_prob_file, 'a') as f:
                 f.write(f'{timestamp:.2f},{tick},{config["simulation"]["delta_k"]},{collision_prob:.4f}\n')
 
     finally:
@@ -1285,9 +1285,18 @@ def run_adaptive_simulation(config, output_dir):
 
             # Log data
             timestamp = tick * config['simulation']['delta_seconds']
-            with open(collision_prob_file, 'a') as f:
-                f.write(f'{timestamp:.2f},{tick},{current_delta_k},{max_collision_prob:.4f},{ground_truth_collision_prob:.4f}\n')
-
+            # Read existing content
+            try:
+                with open(collision_prob_file, 'r') as f:
+                    existing_content = f.read()
+            except FileNotFoundError:
+                existing_content = ''
+                
+            # Write updated content 
+            with open(collision_prob_file, 'w') as f:
+                f.write(existing_content + f'{timestamp:.2f},{tick},{current_delta_k},{max_collision_prob:.4f},{ground_truth_collision_prob:.4f}\n')
+    except Exception as e:
+        print(f"Error in simulation: {e}")
     finally:
         # Cleanup
         if collision_sensor is not None:
@@ -1502,13 +1511,13 @@ def run_monte_carlo_simulation(config, num_samples=10, output_dir='./results'):
             'ego': f'./ego_trajectory_sample_{sample}.csv',
             'obstacle': f'./obstacle_trajectory_sample_{sample}.csv'
         }
-        try:
-            # Generate obstacle trajectory
-            run_obstacle_only_simulation(sample_config)
-        except Exception as e:
-            # obstacle spawn point is invalid
-            print(f"Error in sample {sample}: {e}")
-            continue
+        # try:
+        #     # Generate obstacle trajectory
+        #     run_obstacle_only_simulation(sample_config)
+        # except Exception as e:
+        #     # obstacle spawn point is invalid
+        #     print(f"Error in sample {sample}: {e}")
+        #     continue
         
         try:
             # Generate trajectories
@@ -1568,16 +1577,18 @@ def restart_carla_docker():
         subprocess.run(['docker', 'stop', 'carla'], check=False)
         subprocess.run(['docker', 'rm', 'carla'], check=False)
         
-        # Start new CARLA container
+        # Start new CARLA container with audio disabled
         subprocess.run([
             'docker', 'run', '-d',
             '--name=carla',
             '--privileged',
             '--gpus', 'all',
             '--net=host',
+            '-e', 'PULSE_SERVER=/dev/null',  # Disable PulseAudio
+            '-e', 'ALSA_CONFIG_PATH=/dev/null',  # Disable ALSA
             '-v', '/tmp/.X11-unix:/tmp/.X11-unix:rw',
             'carlasim/carla:0.9.15',
-            '/bin/bash', './CarlaUE4.sh', '-RenderOffScreen'
+            '/bin/bash', './CarlaUE4.sh', '-RenderOffScreen', '-nosound'  # Add -nosound flag
         ], check=True)
         
         # Wait for CARLA to initialize

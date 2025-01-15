@@ -1,13 +1,13 @@
 name: clip-batch-inference
 
 resources:
-  accelerators: {L4:1}
+  accelerators: {L4:1, A10G:1, T4:1}
   memory: 32+
   any_of:
     - use_spot: true 
     - use_spot: false
 
-num_nodes: 1
+num_nodes: 4
 
 file_mounts:
   /output:

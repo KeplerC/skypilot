@@ -19,7 +19,7 @@ python build_vectordb.py \
 To query the constructed database: 
 ```
 python query_vectordb.py \
-  --text "a photo of cloud" \
+  --text "a photo of sky" \
   --collection-name clip_embeddings \
   --persist-dir /tmp/chroma_db \
   --n-results 5
