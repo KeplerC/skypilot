@@ -72,8 +72,8 @@ unprotected_right_turn_config = {
         'fov': '90'
     },
     'save_options': {
-        'save_video': True,
-        'save_images': True,
+        'save_video': False,
+        'save_images': False,
     }
 }
 
@@ -139,8 +139,8 @@ unprotected_left_turn_config =  {
         'fov': '90'
     },
     'save_options': {
-        'save_video': True,
-        'save_images': True,
+        'save_video': False,
+        'save_images': False,
     }
 }
 
@@ -207,8 +207,8 @@ opposite_direction_merge_config =  {
         'fov': '90'
     },
     'save_options': {
-        'save_video': True,
-        'save_images': True,
+        'save_video': False,
+        'save_images': False,
     }
 }
 

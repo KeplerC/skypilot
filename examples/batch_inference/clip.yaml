@@ -1,13 +1,13 @@
 name: clip-batch-inference
 
 resources:
-  accelerators: {L4:1, A10G:1, T4:1}
+  accelerators: {L4:1, A10G:1, A10:1, V100:1}
   memory: 32+
   any_of:
     - use_spot: true 
     - use_spot: false
 
-num_nodes: 4
+num_nodes: 10
 
 file_mounts:
   /output:
@@ -43,7 +43,7 @@ run: |
   # Run the dataloader with specific parameters
   python ~/sky_workdir/dataloader.py \
     --start-idx 0 \
-    --end-idx 10000 \
+    --end-idx 500000 \
     --server-url "http://localhost:5005" \
     --output "/output/embeddings.parquet" 
 

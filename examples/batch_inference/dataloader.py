@@ -69,7 +69,11 @@ class AsyncDataLoader:
         self.batch_size = 50  # Write to CSV every 100 items
 
         # Create CSV file with headers if it doesn't exist
-        if not os.path.exists(self.csv_path):
+        if os.path.exists(self.csv_path):
+            self.results = pd.read_csv(self.csv_path).to_dict(orient='records')
+            self.start_idx = max(self.start_idx, self.results[-1]['idx'] + 1)
+            logging.info(f"Resuming from index {self.start_idx} based on existing output")
+        else:
             with open(self.csv_path, 'w', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(['idx', 'url', 'embedding'])
@@ -371,6 +375,8 @@ async def main():
     
     logging.info(f"Node {NODE_RANK}/{NUM_NODES} processing range [{node_start}, {node_end})")
     logging.info(f"Output will be saved to: {output_path}")
+
+    
 
     async with AsyncDataLoader(start_idx=node_start,
                              end_idx=node_end,
