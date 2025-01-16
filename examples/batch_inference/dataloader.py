@@ -4,9 +4,10 @@ from asyncio import Semaphore
 import base64
 import csv
 from io import BytesIO
+import logging
 import os
-from typing import Dict, List, Optional, Tuple
 import shutil
+from typing import Dict, List, Optional, Tuple
 
 import aiohttp
 from datasets import load_dataset
@@ -19,13 +20,14 @@ from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_exponential
 from tqdm import tqdm
-import logging
 
 # Get node rank and total nodes from environment variables
 NODE_RANK = int(os.getenv('SKYPILOT_NODE_RANK', '0'))
 NUM_NODES = int(os.getenv('SKYPILOT_NUM_NODES', '1'))
 
-def calculate_node_range(start_idx: int, end_idx: int, node_rank: int, num_nodes: int) -> Tuple[int, int]:
+
+def calculate_node_range(start_idx: int, end_idx: int, node_rank: int,
+                         num_nodes: int) -> Tuple[int, int]:
     """Calculate the range of indices this node should process.
     
     Args:
@@ -40,14 +42,16 @@ def calculate_node_range(start_idx: int, end_idx: int, node_rank: int, num_nodes
     total_range = end_idx - start_idx
     chunk_size = total_range // num_nodes
     remainder = total_range % num_nodes
-    
+
     # Distribute remainder across first few nodes
-    node_start = start_idx + (node_rank * chunk_size) + min(node_rank, remainder)
+    node_start = start_idx + (node_rank * chunk_size) + min(
+        node_rank, remainder)
     if node_rank < remainder:
         chunk_size += 1
     node_end = node_start + chunk_size
-    
+
     return node_start, node_end
+
 
 class AsyncDataLoader:
 
@@ -74,9 +78,13 @@ class AsyncDataLoader:
         try:
             self.results = pd.read_csv(self.csv_path).to_dict(orient='records')
             self.start_idx = list(self.results[-1].values())[0]
-            logging.info(f"Resuming from index {self.start_idx} based on existing output")
+            logging.info(
+                f"Resuming from index {self.start_idx} based on existing output"
+            )
         except Exception as e:
-            logging.info(f"No existing output found, starting from index {self.start_idx}")
+            logging.info(
+                f"No existing output found, starting from index {self.start_idx}"
+            )
             with open(self.csv_path, 'w', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(['idx', 'url', 'embedding'])
@@ -142,17 +150,16 @@ class AsyncDataLoader:
         if os.path.exists(self.csv_path):
             with open(self.csv_path, 'r', newline='') as f:
                 existing_rows = list(csv.reader(f))
-        
+
         # Write all content
         with open(self.csv_path, 'w', newline='') as f:
             writer = csv.writer(f)
             for result in self.results:
                 writer.writerow([
-                    result['idx'],
-                    result['url'],
+                    result['idx'], result['url'],
                     ','.join(map(str, result['embedding']))
                 ])
-        
+
         self.results = []  # Clear memory after writing
 
     def convert_to_parquet(self):
@@ -162,27 +169,27 @@ class AsyncDataLoader:
             return
 
         # Read CSV in chunks to handle large files
-        chunks = pd.read_csv(self.csv_path, 
-                           chunksize=10000,
-                           names=['idx', 'url', 'embedding'],
-                           skiprows=1)
-        
+        chunks = pd.read_csv(self.csv_path,
+                             chunksize=10000,
+                             names=['idx', 'url', 'embedding'],
+                             skiprows=1)
+
         # Process first chunk
         first_chunk = next(chunks)
         first_chunk['embedding'] = first_chunk['embedding'].apply(
             lambda x: [float(i) for i in x.split(',')])
-        
+
         # Write first chunk to parquet
         table = pa.Table.from_pandas(first_chunk)
         pq.write_table(table, self.output_path)
-        
+
         # Append remaining chunks
         for chunk in chunks:
             chunk['embedding'] = chunk['embedding'].apply(
                 lambda x: [float(i) for i in x.split(',')])
             table = pa.Table.from_pandas(chunk)
             pq.write_table(table, self.output_path, append=True)
-        
+
         # Clean up intermediate CSV
         os.remove(self.csv_path)
         logging.info(f"Successfully converted results to {self.output_path}")
@@ -216,21 +223,29 @@ class AsyncDataLoader:
             logging.error(f"Error processing item {idx}: {str(e)}")
             return False
 
-    async def get_embeddings_batch(self, batch_data: List[Tuple[int, str, str]]) -> List[Tuple[int, str, Optional[np.ndarray]]]:
+    async def get_embeddings_batch(
+        self, batch_data: List[Tuple[int, str, str]]
+    ) -> List[Tuple[int, str, Optional[np.ndarray]]]:
         """Get CLIP embeddings for a batch of images"""
         try:
             # Prepare batch input
-            inputs = [{"input": image_data, "model": "ViT-bigG-14"} for _, _, image_data in batch_data]
-            
+            inputs = [{
+                "input": image_data,
+                "model": "ViT-bigG-14"
+            } for _, _, image_data in batch_data]
+
             async with self.session.post(
                     f"{self.inference_server_url}/v1/embeddings/batch",
                     json={"inputs": inputs}) as response:
                 result = await response.json()
-                
+
                 # Process results maintaining order
                 processed_results = []
-                for (idx, url, _), embedding_result in zip(batch_data, result.get("data", [])):
-                    embedding = np.array(embedding_result["embedding"]) if embedding_result else None
+                for (idx, url,
+                     _), embedding_result in zip(batch_data,
+                                                 result.get("data", [])):
+                    embedding = np.array(embedding_result["embedding"]
+                                        ) if embedding_result else None
                     processed_results.append((idx, url, embedding))
                 return processed_results
         except Exception as e:
@@ -245,8 +260,9 @@ class AsyncDataLoader:
         # Create queues for download, embedding, and writing tasks
         download_queue = asyncio.Queue(maxsize=500)
         embedding_queue = asyncio.Queue(maxsize=500)
-        write_queue = asyncio.Queue(maxsize=500)  # New queue for writing results
-        
+        write_queue = asyncio.Queue(
+            maxsize=500)  # New queue for writing results
+
         with tqdm(total=total, desc="Total Progress") as total_pbar, \
              tqdm(total=total, desc="Downloads", position=1) as download_pbar, \
              tqdm(total=total, desc="Embeddings", position=2) as embedding_pbar:
@@ -259,10 +275,12 @@ class AsyncDataLoader:
                         try:
                             image_data = await self.download_image(item["url"])
                             if image_data is not None:
-                                await embedding_queue.put((idx, item["url"], image_data))
+                                await embedding_queue.put(
+                                    (idx, item["url"], image_data))
                             download_pbar.update(1)
                         except Exception as e:
-                            logging.error(f"Error downloading image {idx}: {str(e)}")
+                            logging.error(
+                                f"Error downloading image {idx}: {str(e)}")
                         finally:
                             download_queue.task_done()
                 except asyncio.CancelledError:
@@ -275,7 +293,7 @@ class AsyncDataLoader:
                         # Collect batch of items
                         batch = []
                         batch_size = self.batch_size
-                        
+
                         try:
                             item = await embedding_queue.get()
                             batch.append(item)
@@ -288,7 +306,7 @@ class AsyncDataLoader:
                                 batch.append(item)
                             except asyncio.QueueEmpty:
                                 break
-                        
+
                         try:
                             results = await self.get_embeddings_batch(batch)
                             for idx, url, embedding in results:
@@ -315,33 +333,34 @@ class AsyncDataLoader:
                     results_buffer = []
                     # Create temp file path
                     temp_csv_path = f"/tmp/intermediate_{os.path.basename(self.csv_path)}"
-                    
-                    # bootstrap the file if the output file exists 
+
+                    # bootstrap the file if the output file exists
                     if os.path.exists(self.csv_path):
                         shutil.copy2(self.csv_path, temp_csv_path)
-                    
+
                     # Initialize the CSV file if it doesn't exist
                     if not os.path.exists(temp_csv_path):
                         with open(temp_csv_path, 'w', newline='') as f:
                             writer = csv.writer(f)
                             writer.writerow(['idx', 'url', 'embedding'])
-                    
+
                     while True:
                         try:
                             result = await write_queue.get()
                             results_buffer.append(result)
-                            
-                            if len(results_buffer) >= self.checkpoint_size or result['idx'] == self.end_idx - 1:
+
+                            if len(results_buffer
+                                  ) >= self.checkpoint_size or result[
+                                      'idx'] == self.end_idx - 1:
                                 # Append batch to temporary file
                                 with open(temp_csv_path, 'a', newline='') as f:
                                     writer = csv.writer(f)
                                     for r in results_buffer:
                                         writer.writerow([
-                                            r['idx'],
-                                            r['url'],
+                                            r['idx'], r['url'],
                                             ','.join(map(str, r['embedding']))
                                         ])
-                                
+
                                 # Copy temp file to final destination
                                 shutil.copy2(temp_csv_path, self.csv_path)
                                 results_buffer = []
@@ -356,13 +375,12 @@ class AsyncDataLoader:
                             writer = csv.writer(f)
                             for r in results_buffer:
                                 writer.writerow([
-                                    r['idx'],
-                                    r['url'],
+                                    r['idx'], r['url'],
                                     ','.join(map(str, r['embedding']))
                                 ])
                         # Final copy to destination
                         shutil.copy2(temp_csv_path, self.csv_path)
-                    
+
                     # Cleanup temp file
                     if os.path.exists(temp_csv_path):
                         os.remove(temp_csv_path)
@@ -370,14 +388,13 @@ class AsyncDataLoader:
 
             # Start workers
             download_workers = [
-                asyncio.create_task(download_worker())
-                for _ in range(100)
+                asyncio.create_task(download_worker()) for _ in range(100)
             ]
             embedding_workers = [
-                asyncio.create_task(embedding_worker())
-                for _ in range(50)
+                asyncio.create_task(embedding_worker()) for _ in range(50)
             ]
-            csv_writer_task = asyncio.create_task(csv_writer())  # Single CSV writer
+            csv_writer_task = asyncio.create_task(
+                csv_writer())  # Single CSV writer
 
             # Feed the download queue
             for idx, item in enumerate(dataset, start=self.start_idx):
@@ -389,12 +406,16 @@ class AsyncDataLoader:
             await write_queue.join()
 
             # Cancel all workers
-            for worker in download_workers + embedding_workers + [csv_writer_task]:
+            for worker in download_workers + embedding_workers + [
+                    csv_writer_task
+            ]:
                 worker.cancel()
-            
+
             # Wait for workers to finish
-            await asyncio.gather(*download_workers, *embedding_workers, csv_writer_task,
-                               return_exceptions=True)
+            await asyncio.gather(*download_workers,
+                                 *embedding_workers,
+                                 csv_writer_task,
+                                 return_exceptions=True)
 
         # Convert final CSV to parquet
         self.convert_to_parquet()
@@ -427,31 +448,30 @@ async def main():
     args = parser.parse_args()
 
     # Calculate node-specific range
-    node_start, node_end = calculate_node_range(
-        args.start_idx, args.end_idx, NODE_RANK, NUM_NODES
-    )
-    
+    node_start, node_end = calculate_node_range(args.start_idx, args.end_idx,
+                                                NODE_RANK, NUM_NODES)
+
     # Modify output path to include node rank
     output_path = args.output
     if NUM_NODES > 1:
         base, ext = os.path.splitext(args.output)
         output_path = f"{base}_node{NODE_RANK}{ext}"
-    
+
     csv_path = args.csv_path
     if NUM_NODES > 1:
         base, ext = os.path.splitext(csv_path)
         csv_path = f"{base}_node{NODE_RANK}{ext}"
-    
-    logging.info(f"Node {NODE_RANK}/{NUM_NODES} processing range [{node_start}, {node_end})")
+
+    logging.info(
+        f"Node {NODE_RANK}/{NUM_NODES} processing range [{node_start}, {node_end})"
+    )
     logging.info(f"Output will be saved to: {output_path}")
 
-    
-
     async with AsyncDataLoader(start_idx=node_start,
-                             end_idx=node_end,
-                             inference_server_url=args.server_url,
-                             output_path=output_path,
-                             csv_path=csv_path) as loader:
+                               end_idx=node_end,
+                               inference_server_url=args.server_url,
+                               output_path=output_path,
+                               csv_path=csv_path) as loader:
         await loader.run()
 
 

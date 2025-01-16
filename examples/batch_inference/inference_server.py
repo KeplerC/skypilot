@@ -1,11 +1,11 @@
 import asyncio
 import base64
 from io import BytesIO
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Tuple, Union
 
-import open_clip
 from fastapi import FastAPI
 import numpy as np
+import open_clip
 from PIL import Image
 from pydantic import BaseModel
 import torch
@@ -18,7 +18,8 @@ class EmbeddingRequest(BaseModel):
 
 
 class BatchEmbeddingRequest(BaseModel):
-    inputs: List[Dict[str, str]]  # List of requests, each with input and model fields
+    inputs: List[Dict[
+        str, str]]  # List of requests, each with input and model fields
 
 
 class ClipInferenceServer:
@@ -32,20 +33,19 @@ class ClipInferenceServer:
         """Load model if not already loaded"""
         if model_name not in self.models:
             model, _, preprocess = open_clip.create_model_and_transforms(
-                model_name,
-                pretrained="laion2b_s39b_b160k",  
-                device=self.device
-            )
+                model_name, pretrained="laion2b_s39b_b160k", device=self.device)
             self.models[model_name] = (model, preprocess)
         return self.models[model_name]
 
-    async def get_embedding(self, images: List[Image.Image], model_name: str) -> np.ndarray:
+    async def get_embedding(self, images: List[Image.Image],
+                            model_name: str) -> np.ndarray:
         """Get CLIP embeddings for a batch of PIL Images using specified model"""
         # Get or load the requested model
         model, preprocess = await self.get_model(model_name)
-        
+
         # Preprocess all images in the batch
-        image_inputs = torch.stack([preprocess(img) for img in images]).to(self.device)
+        image_inputs = torch.stack([preprocess(img) for img in images
+                                   ]).to(self.device)
 
         # Use lock to prevent concurrent GPU operations
         async with self.lock:
@@ -99,16 +99,13 @@ async def create_embeddings(request: EmbeddingRequest):
     # Process all images in a single batch
     try:
         embeddings = await inference_server.get_embedding(images, request.model)
-        
+
         # Format response similar to OpenAI
-        data = [
-            {
-                "object": "embedding",
-                "embedding": emb.flatten().tolist(),
-                "index": idx
-            }
-            for idx, emb in zip(valid_indices, embeddings)
-        ]
+        data = [{
+            "object": "embedding",
+            "embedding": emb.flatten().tolist(),
+            "index": idx
+        } for idx, emb in zip(valid_indices, embeddings)]
 
         return {
             "object": "list",
@@ -144,15 +141,15 @@ async def create_batch_embeddings(request: BatchEmbeddingRequest):
         model_groups[model_name].append((idx, image_data))
 
     all_results = []
-    
+
     # Process each model group
     for model_name, image_group in model_groups.items():
         indices, images_data = zip(*image_group)
-        
+
         # Convert base64 strings to PIL Images
         images = []
         valid_indices = []
-        
+
         for idx, img_data in zip(indices, images_data):
             try:
                 image_bytes = base64.b64decode(img_data)
@@ -165,24 +162,24 @@ async def create_batch_embeddings(request: BatchEmbeddingRequest):
 
         if images:
             try:
-                embeddings = await inference_server.get_embedding(images, model_name)
-                
+                embeddings = await inference_server.get_embedding(
+                    images, model_name)
+
                 # Create results for this batch
-                results = [
-                    {
-                        "object": "embedding",
-                        "embedding": emb.flatten().tolist(),
-                        "index": idx
-                    }
-                    for idx, emb in zip(valid_indices, embeddings)
-                ]
+                results = [{
+                    "object": "embedding",
+                    "embedding": emb.flatten().tolist(),
+                    "index": idx
+                } for idx, emb in zip(valid_indices, embeddings)]
                 all_results.extend(results)
             except Exception as e:
-                print(f"Error processing embeddings for model {model_name}: {str(e)}")
+                print(
+                    f"Error processing embeddings for model {model_name}: {str(e)}"
+                )
 
     # Sort results by original index
     all_results.sort(key=lambda x: x["index"])
-    
+
     return {
         "object": "list",
         "data": all_results,
