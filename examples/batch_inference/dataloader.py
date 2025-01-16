@@ -6,6 +6,7 @@ import csv
 from io import BytesIO
 import os
 from typing import Dict, List, Optional, Tuple
+import shutil
 
 import aiohttp
 from datasets import load_dataset
@@ -55,7 +56,7 @@ class AsyncDataLoader:
                  end_idx: int,
                  inference_server_url: str = "http://localhost:8000",
                  output_path: str = "embeddings.parquet",
-                 csv_path: str = "/tmp/intermediate.csv",
+                 csv_path: str = "/tmp/checkpoint.csv",
                  max_concurrent: int = 50):
         self.start_idx = start_idx
         self.end_idx = end_idx
@@ -67,6 +68,7 @@ class AsyncDataLoader:
         # Store a small batch of results in memory before writing to CSV
         self.results: List[Dict] = []
         self.batch_size = 50  # Write to CSV every 100 items
+        self.checkpoint_size = 1000
 
         # Create CSV file with headers if it doesn't exist
         try:
@@ -311,34 +313,37 @@ class AsyncDataLoader:
                 """Dedicated worker for writing results to CSV"""
                 try:
                     results_buffer = []
+                    # Create temp file path
+                    temp_csv_path = f"/tmp/intermediate_{os.path.basename(self.csv_path)}"
+                    
+                    # bootstrap the file if the output file exists 
+                    if os.path.exists(self.csv_path):
+                        shutil.copy2(self.csv_path, temp_csv_path)
+                    
+                    # Initialize the CSV file if it doesn't exist
+                    if not os.path.exists(temp_csv_path):
+                        with open(temp_csv_path, 'w', newline='') as f:
+                            writer = csv.writer(f)
+                            writer.writerow(['idx', 'url', 'embedding'])
+                    
                     while True:
                         try:
                             result = await write_queue.get()
                             results_buffer.append(result)
                             
-                            if len(results_buffer) >= self.batch_size:
-                                # Read existing content
-                                existing_rows = []
-                                if os.path.exists(self.csv_path):
-                                    with open(self.csv_path, 'r', newline='') as f:
-                                        reader = csv.reader(f)
-                                        existing_rows = list(reader)
-                                
-                                # Write all content
-                                with open(self.csv_path, 'w', newline='') as f:
+                            if len(results_buffer) >= self.checkpoint_size or result['idx'] == self.end_idx - 1:
+                                # Append batch to temporary file
+                                with open(temp_csv_path, 'a', newline='') as f:
                                     writer = csv.writer(f)
-                                    # Write header if it's a new file
-                                    if not existing_rows:
-                                        writer.writerow(['idx', 'url', 'embedding'])
-                                    else:
-                                        writer.writerows(existing_rows[1:])  # Skip header
-                                    # Write new results
                                     for r in results_buffer:
                                         writer.writerow([
                                             r['idx'],
                                             r['url'],
                                             ','.join(map(str, r['embedding']))
                                         ])
+                                
+                                # Copy temp file to final destination
+                                shutil.copy2(temp_csv_path, self.csv_path)
                                 results_buffer = []
                         except Exception as e:
                             logging.error(f"Error writing to CSV: {str(e)}")
@@ -347,24 +352,20 @@ class AsyncDataLoader:
                 except asyncio.CancelledError:
                     # Write any remaining results before exiting
                     if results_buffer:
-                        existing_rows = []
-                        if os.path.exists(self.csv_path):
-                            with open(self.csv_path, 'r', newline='') as f:
-                                reader = csv.reader(f)
-                                existing_rows = list(reader)
-                        
-                        with open(self.csv_path, 'w', newline='') as f:
+                        with open(temp_csv_path, 'a', newline='') as f:
                             writer = csv.writer(f)
-                            if not existing_rows:
-                                writer.writerow(['idx', 'url', 'embedding'])
-                            else:
-                                writer.writerows(existing_rows[1:])  # Skip header
                             for r in results_buffer:
                                 writer.writerow([
                                     r['idx'],
                                     r['url'],
                                     ','.join(map(str, r['embedding']))
                                 ])
+                        # Final copy to destination
+                        shutil.copy2(temp_csv_path, self.csv_path)
+                    
+                    # Cleanup temp file
+                    if os.path.exists(temp_csv_path):
+                        os.remove(temp_csv_path)
                     return
 
             # Start workers

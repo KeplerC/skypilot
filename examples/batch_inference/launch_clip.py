@@ -34,8 +34,10 @@ def main():
                       help='Global start index in dataset')
     parser.add_argument('--end-idx', type=int, default=500000,
                       help='Global end index in dataset')
-    parser.add_argument('--num-jobs', type=int, default=10,
+    parser.add_argument('--num-jobs', type=int, default=1,
                       help='Number of jobs to partition the work across')
+    parser.add_argument('--run_as_job', action='store_true',
+                      help='Run as a job')
     
     args = parser.parse_args()
 
@@ -69,13 +71,19 @@ def main():
             'HF_TOKEN': hf_token,
         })
         
-        # Launch the job
-        sky.jobs.launch(
-            task_copy,
+        if args.run_as_job:
+            # Launch the job
+            sky.jobs.launch(
+                task_copy,
             name=f'clip-inference-{job_start}-{job_end}',
-            # detach_run=True,
-            retry_until_up=True,
-        )
+                # detach_run=True,
+                retry_until_up=True,
+            )
+        else:
+            sky.launch(
+                task_copy,
+                retry_until_up=True,
+            )
 
 if __name__ == '__main__':
     main() 
