@@ -32,11 +32,11 @@ def main():
     parser = argparse.ArgumentParser(description='Launch batch CLIP inference jobs')
     parser.add_argument('--start-idx', type=int, default=0,
                       help='Global start index in dataset')
-    parser.add_argument('--end-idx', type=int, default=500000,
+    parser.add_argument('--end-idx', type=int, default=5000,
                       help='Global end index in dataset')
     parser.add_argument('--num-jobs', type=int, default=1,
                       help='Number of jobs to partition the work across')
-    parser.add_argument('--run_as_job', action='store_true',
+    parser.add_argument('--run-as-job', action='store_true',
                       help='Run as a job')
     
     args = parser.parse_args()

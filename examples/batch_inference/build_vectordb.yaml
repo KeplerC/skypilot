@@ -1,0 +1,30 @@
+name: vectordb-build
+
+resources:
+  cloud: aws # because the bucket is in AWS, this is cheaper
+  # instance_type: r5.2xlarge 
+
+file_mounts:
+  /clip_embeddings:
+    name: kych-clip-embeddings 
+    store: s3
+    mode: MOUNT
+  
+  /chroma_db:
+    name: kych-vectordb-bucket 
+    store: s3
+    mode: MOUNT
+
+setup: |
+  # Install required packages
+  pip install chromadb pandas boto3 tqdm
+
+workdir: ~/skypilot/examples/batch_inference
+
+run: |
+
+  # Run the vector database build script
+  python build_vectordb.py \
+    --collection-name clip_embeddings \
+    --persist-dir /chroma_db \
+    --batch-size 1000 
