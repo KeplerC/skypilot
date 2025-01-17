@@ -62,21 +62,6 @@ class BatchInferenceProcessor(BatchProcessor[InputType, ModelOutputType], abc.AB
         raise NotImplementedError
         
     @abc.abstractmethod
-    async def preprocess_input(
-        self,
-        raw_input: InputType
-    ) -> Optional[ModelInputType]:
-        """Preprocess a single input item for the model.
-        
-        Args:
-            raw_input: Raw input from the dataset
-            
-        Returns:
-            Preprocessed input ready for the model, or None if preprocessing failed
-        """
-        raise NotImplementedError
-        
-    @abc.abstractmethod
     async def run_model_inference(
         self,
         model_inputs: List[ModelInputType]
@@ -100,36 +85,23 @@ class BatchInferenceProcessor(BatchProcessor[InputType, ModelOutputType], abc.AB
         """
         raise NotImplementedError
         
-    async def do_data_loading(self) -> AsyncIterator[Tuple[int, InputType]]:
-        """Implement BatchProcessor's data loading using dataset iterator."""
-        async for item in self.get_dataset_iterator():
-            yield item
+    async def do_data_loading(self) -> AsyncIterator[Tuple[int, ModelInputType]]:
+        """Implement BatchProcessor's data loading using dataset iterator with preprocessing."""
+        if self.model is None:
+            await self.setup_model()
             
+        async for idx, input in self.get_dataset_iterator():
+            yield idx, input
+
     async def do_batch_processing(
         self,
-        batch: List[Tuple[int, InputType]]
+        batch: List[Tuple[int, ModelInputType]]
     ) -> List[Tuple[int, ModelOutputType]]:
         """Implement BatchProcessor's batch processing using the model pipeline."""
         if self.model is None:
             await self.setup_model()
             
-        # Preprocess inputs in parallel
-        preprocessed = await asyncio.gather(*[
-            self.preprocess_input(input_data)
-            for _, input_data in batch
-        ])
-        
-        # Filter out failed preprocessings
-        valid_items = [
-            (idx, prep_input)
-            for (idx, _), prep_input in zip(batch, preprocessed)
-            if prep_input is not None
-        ]
-        
-        if not valid_items:
-            return []
-            
-        # Run model inference
-        indices, model_inputs = zip(*valid_items)
+        # Run model inference directly since inputs are already preprocessed
+        indices, model_inputs = zip(*batch)
         outputs = await self.run_model_inference(list(model_inputs))
         return list(zip(indices, outputs)) 
