@@ -132,5 +132,4 @@ class BatchInferenceProcessor(BatchProcessor[InputType, ModelOutputType], abc.AB
         # Run model inference
         indices, model_inputs = zip(*valid_items)
         outputs = await self.run_model_inference(list(model_inputs))
-        
         return list(zip(indices, outputs)) 

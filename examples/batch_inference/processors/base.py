@@ -8,7 +8,7 @@ from typing import Any, AsyncIterator, Dict, Generic, List, Optional, Tuple, Typ
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from tqdm.asyncio import tqdm
+from tqdm import tqdm
 
 # Generic type variables for input and output data
 InputType = TypeVar('InputType')
@@ -56,18 +56,52 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
         
         # Initialize state
         self._setup_output_file()
+        
+        # Calculate total items to process
+        self.total_items = self.end_idx - self.start_idx if self.end_idx else None
+
+        logging.info(f"start_idx: {self.start_idx}, end_idx: {self.end_idx}, total_items: {self.total_items}")
+        if self.total_items < 0:
+            raise ValueError("Total items to process must be greater than 0")
+        
+        # Initialize progress bars
+        self.load_pbar = tqdm(total=self.total_items, 
+                             desc="Loading", 
+                             position=0)
+        self.process_pbar = tqdm(total=self.total_items, 
+                                desc="Processing", 
+                                position=1)
+        self.write_pbar = tqdm(total=self.total_items, 
+                              desc="Writing", 
+                              position=2)
+
+    def __del__(self):
+        """Clean up progress bars."""
+        if hasattr(self, 'load_pbar'):
+            self.load_pbar.close()
+        if hasattr(self, 'process_pbar'):
+            self.process_pbar.close()
+        if hasattr(self, 'write_pbar'):
+            self.write_pbar.close()
 
     def _setup_output_file(self):
-        """Set up the output parquet file if it doesn't exist."""
+        """Set up the output parquet file and determine start index."""
         if not self.output_path.exists():
             # Create empty parquet file with schema
             empty_df = pd.DataFrame({
                 'idx': pd.Series([], dtype='int64'),
-                'input': pd.Series([], dtype='object'),
                 'output': pd.Series([], dtype='object')
             })
             table = pa.Table.from_pandas(empty_df)
             pq.write_table(table, self.output_path)
+        else:
+            # Read existing file and update start_idx to resume from last checkpoint
+            existing_table = pq.read_table(self.output_path)
+            existing_df = existing_table.to_pandas()
+            if not existing_df.empty:
+                last_processed_idx = existing_df['idx'].max()
+                self.start_idx = max(self.start_idx, last_processed_idx + 1)
+                logging.info(f"Resuming from index {self.start_idx}")
 
     @abc.abstractmethod
     async def do_data_loading(self) -> AsyncIterator[Tuple[int, InputType]]:
@@ -90,6 +124,7 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
                     break
                 if idx >= self.start_idx:
                     await self.load_queue.put((idx, input_data))
+                    self.load_pbar.update(1)
         except asyncio.CancelledError:
             return
         finally:
@@ -112,6 +147,7 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
                         results = await self.do_batch_processing(batch)
                         for result in results:
                             await self.write_queue.put(result)
+                        self.process_pbar.update(len(results))
                         batch = []
                 finally:
                     self.load_queue.task_done()
@@ -121,6 +157,7 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
                 results = await self.do_batch_processing(batch)
                 for result in results:
                     await self.write_queue.put(result)
+                self.process_pbar.update(len(results))
                     
             # Signal end of processing
             await self.write_queue.put((None, None))
@@ -140,6 +177,7 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
                     'idx': idx,
                     'output': output
                 })
+                self.write_pbar.update(1)
                 
                 if len(buffer) >= self.checkpoint_size:
                     await self._checkpoint_results(buffer)
@@ -156,18 +194,31 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
 
     async def _checkpoint_results(self, results: List[Dict[str, Any]]):
         """Checkpoint results to parquet file."""
-        df = pd.DataFrame(results)
-        table = pa.Table.from_pandas(df)
+        # Read existing data
+        existing_table = pq.read_table(self.output_path)
+        existing_df = existing_table.to_pandas()
         
-        # Append to existing parquet file
-        pq.write_table(table, self.output_path, append=True)
+        # Create new dataframe with results and concatenate
+        new_df = pd.DataFrame(results)
+        combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+        
+        # Write back to parquet file
+        table = pa.Table.from_pandas(combined_df)
+        pq.write_table(table, self.output_path)
 
     async def run(self):
         """Run the batch processing pipeline."""
-        # Start workers
-        load_task = asyncio.create_task(self._load_worker())
-        process_task = asyncio.create_task(self._process_worker())
-        write_task = asyncio.create_task(self._write_worker())
-        
-        # Wait for all tasks to complete
-        await asyncio.gather(load_task, process_task, write_task) 
+        try:
+            # Start workers
+            load_task = asyncio.create_task(self._load_worker())
+            process_task = asyncio.create_task(self._process_worker())
+            write_task = asyncio.create_task(self._write_worker())
+            
+            # Wait for all tasks to complete
+            await asyncio.gather(load_task, process_task, write_task)
+
+        finally:
+            # Clean up progress bars
+            self.load_pbar.close()
+            self.process_pbar.close()
+            self.write_pbar.close() 
