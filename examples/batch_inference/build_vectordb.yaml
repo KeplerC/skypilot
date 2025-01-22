@@ -9,17 +9,17 @@ file_mounts:
     name: sky-clip-embeddings 
     mode: MOUNT
   
-  /chroma_db:
+  /vectordb:
     name: sky-vectordb-bucket 
     mode: MOUNT
 
 setup: |
-  pip install chromadb pandas tqdm
+  pip install chromadb pandas tqdm pyarrow
 
 workdir: ~/skypilot/examples/batch_inference
 
 run: |
   python scripts/build_vectordb.py \
     --collection-name clip_embeddings \
-    --persist-dir /chroma_db \
+    --persist-dir /vectordb/chroma \
     --batch-size 1000 

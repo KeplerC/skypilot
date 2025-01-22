@@ -1,9 +1,11 @@
 import abc
 import asyncio
-from asyncio import Queue, Semaphore
+from asyncio import Queue
+from asyncio import Semaphore
 import logging
 from pathlib import Path
-from typing import Any, AsyncIterator, Dict, Generic, List, Optional, Tuple, TypeVar
+from typing import (Any, AsyncIterator, Dict, Generic, List, Optional, Tuple,
+                    TypeVar)
 
 import pandas as pd
 import pyarrow as pa
@@ -13,6 +15,7 @@ from tqdm import tqdm
 # Generic type variables for input and output data
 InputType = TypeVar('InputType')
 OutputType = TypeVar('OutputType')
+
 
 class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
     """Abstract base class for batch processing with async queues and checkpointing.
@@ -48,32 +51,34 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
         self.batch_size = batch_size
         self.checkpoint_size = checkpoint_size
         self.semaphore = Semaphore(max_concurrent_tasks)
-        
+
         # Initialize queues
         self.load_queue: Queue = Queue(maxsize=500)
         self.process_queue: Queue = Queue(maxsize=500)
         self.write_queue: Queue = Queue(maxsize=500)
-        
+
         # Initialize state
         self._setup_output_file()
-        
+
         # Calculate total items to process
         self.total_items = self.end_idx - self.start_idx if self.end_idx else None
 
-        logging.info(f"start_idx: {self.start_idx}, end_idx: {self.end_idx}, total_items: {self.total_items}")
+        logging.info(
+            f"start_idx: {self.start_idx}, end_idx: {self.end_idx}, total_items: {self.total_items}"
+        )
         if self.total_items < 0:
             raise ValueError("Total items to process must be greater than 0")
-        
+
         # Initialize progress bars
-        self.load_pbar = tqdm(total=self.total_items, 
-                             desc="Loading", 
-                             position=0)
-        self.process_pbar = tqdm(total=self.total_items, 
-                                desc="Processing", 
-                                position=1)
-        self.write_pbar = tqdm(total=self.total_items, 
-                              desc="Writing", 
-                              position=2)
+        self.load_pbar = tqdm(total=self.total_items,
+                              desc="Loading",
+                              position=0)
+        self.process_pbar = tqdm(total=self.total_items,
+                                 desc="Processing",
+                                 position=1)
+        self.write_pbar = tqdm(total=self.total_items,
+                               desc="Writing",
+                               position=2)
 
     def __del__(self):
         """Clean up progress bars."""
@@ -110,9 +115,8 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
 
     @abc.abstractmethod
     async def do_batch_processing(
-        self, 
-        batch: List[Tuple[int, InputType]]
-    ) -> List[Tuple[int, OutputType]]:
+            self,
+            batch: List[Tuple[int, InputType]]) -> List[Tuple[int, OutputType]]:
         """Process a batch of inputs and return corresponding outputs."""
         raise NotImplementedError
 
@@ -140,9 +144,9 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
                     idx, input_data = await self.load_queue.get()
                     if idx is None:  # End of data
                         break
-                        
+
                     batch.append((idx, input_data))
-                    
+
                     if len(batch) >= self.batch_size:
                         results = await self.do_batch_processing(batch)
                         for result in results:
@@ -151,14 +155,14 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
                         batch = []
                 finally:
                     self.load_queue.task_done()
-                    
+
             # Process remaining items in batch
             if batch:
                 results = await self.do_batch_processing(batch)
                 for result in results:
                     await self.write_queue.put(result)
                 self.process_pbar.update(len(results))
-                    
+
             # Signal end of processing
             await self.write_queue.put((None, None))
         except asyncio.CancelledError:
@@ -172,17 +176,14 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
                 idx, output = await self.write_queue.get()
                 if idx is None:  # End of data
                     break
-                    
-                buffer.append({
-                    'idx': idx,
-                    'output': output
-                })
+
+                buffer.append({'idx': idx, 'output': output})
                 self.write_pbar.update(1)
-                
+
                 if len(buffer) >= self.checkpoint_size:
                     await self._checkpoint_results(buffer)
                     buffer = []
-                    
+
             # Write remaining results
             if buffer:
                 await self._checkpoint_results(buffer)
@@ -197,11 +198,11 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
         # Read existing data
         existing_table = pq.read_table(self.output_path)
         existing_df = existing_table.to_pandas()
-        
+
         # Create new dataframe with results and concatenate
         new_df = pd.DataFrame(results)
         combined_df = pd.concat([existing_df, new_df], ignore_index=True)
-        
+
         # Write back to parquet file
         table = pa.Table.from_pandas(combined_df)
         pq.write_table(table, self.output_path)
@@ -213,7 +214,7 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
             load_task = asyncio.create_task(self._load_worker())
             process_task = asyncio.create_task(self._process_worker())
             write_task = asyncio.create_task(self._write_worker())
-            
+
             # Wait for all tasks to complete
             await asyncio.gather(load_task, process_task, write_task)
 
@@ -221,4 +222,4 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
             # Clean up progress bars
             self.load_pbar.close()
             self.process_pbar.close()
-            self.write_pbar.close() 
+            self.write_pbar.close()
