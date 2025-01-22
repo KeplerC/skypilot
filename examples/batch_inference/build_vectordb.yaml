@@ -1,7 +1,7 @@
 name: vectordb-build
 
 resources:
-  cloud: aws # because the bucket is in AWS, this is cheaper
+  cloud: aws 
   # instance_type: r5.2xlarge 
 
 file_mounts:
@@ -14,12 +14,12 @@ file_mounts:
     mode: MOUNT
 
 setup: |
-  pip install chromadb pandas boto3 tqdm
+  pip install chromadb pandas tqdm
 
 workdir: ~/skypilot/examples/batch_inference
 
 run: |
-  python build_vectordb.py \
+  python scripts/build_vectordb.py \
     --collection-name clip_embeddings \
     --persist-dir /chroma_db \
     --batch-size 1000 

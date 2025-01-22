@@ -1,13 +1,9 @@
 import argparse
 import glob
-from io import BytesIO
 import logging
 import os
-import shutil
 
-import boto3
 import chromadb
-from chromadb.config import Settings
 import pandas as pd
 from tqdm import tqdm
 
