@@ -11,8 +11,7 @@ num_nodes: 1
 
 file_mounts:
   /output:
-    name: kych-clip-embeddings
-    store: S3
+    name: sky-clip-embeddings
     mode: MOUNT
 
 envs:
@@ -20,41 +19,23 @@ envs:
   START_IDX: ${START_IDX}
   END_IDX: ${END_IDX}
 
-# working directory, you may need to change this to your own path
 workdir: ~/skypilot/examples/batch_inference
 
 setup: |
-  # Install required packages
   pip install numpy==1.26.4
   pip install torch==2.5.1 torchvision==0.20.1 ftfy regex tqdm
   pip install datasets webdataset requests Pillow open_clip_torch
   pip install fastapi uvicorn aiohttp pandas pyarrow tenacity
 
-  # preload the model
-  # python -c "from open_clip import open_clip; open_clip.load('ViT-bigG-14', pretrained='laion2b_s39b_b160k')"
-
 run: |
-  # Start the inference server in the background
-  python inference_server.py > /output/server.log 2>&1 &
-  SERVER_PID=$!
-
-  # Wait for server to start
-  echo "Waiting for server to start..."
-  sleep 3
-
-  # Run the dataloader with specific parameters
-  python ~/sky_workdir/dataloader.py \
+  python batch_process_clip.py \
+    --output-path "/output/embeddings_${START_IDX}_${END_IDX}.parquet" \
     --start-idx ${START_IDX} \
     --end-idx ${END_IDX} \
-    --server-url "http://localhost:5005" \
-    --output "/output/embeddings_${START_IDX}_${END_IDX}.parquet" \
-    --csv-path "/output/intermediate_${START_IDX}_${END_IDX}.csv"
-
-  # Cleanup: Kill the server process
-  kill $SERVER_PID
-
-  # Wait for server to shutdown gracefully
-  wait $SERVER_PID
+    --batch-size 50 \
+    --checkpoint-size 100 \
+    --model-name "ViT-bigG-14" \
+    --dataset-name "laion/relaion2B-en-research-safe"
 
   echo "Processing complete. Results saved in node-specific files under /output/"
   ls -l /output

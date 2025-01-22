@@ -120,6 +120,28 @@ class ClipBatchProcessor(HuggingFaceDatasetMixin, BatchInferenceProcessor[Dict[s
         
 async def main():
     """Example usage of the batch processing framework."""
+    import argparse
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Run CLIP batch processing')
+    parser.add_argument('--output-path', type=str, default='embeddings.parquet',
+                      help='Path to output parquet file')
+    parser.add_argument('--start-idx', type=int, default=0,
+                      help='Starting index in dataset')
+    parser.add_argument('--end-idx', type=int, default=1000,
+                      help='Ending index in dataset') 
+    parser.add_argument('--batch-size', type=int, default=50,
+                      help='Batch size for processing')
+    parser.add_argument('--checkpoint-size', type=int, default=100,
+                      help='Number of results before checkpointing')
+    parser.add_argument('--model-name', type=str, default='ViT-bigG-14',
+                      help='CLIP model name')
+    parser.add_argument('--dataset-name', type=str, 
+                      default='laion/relaion2B-en-research-safe',
+                      help='HuggingFace dataset name')
+    
+    args = parser.parse_args()
+
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
@@ -128,13 +150,13 @@ async def main():
 
     # Initialize processor
     processor = ClipBatchProcessor(
-        output_path="embeddings.parquet",
-        start_idx=0,
-        end_idx=1000,
-        batch_size=50,
-        checkpoint_size=100,
-        model_name="ViT-bigG-14",
-        dataset_name="laion/relaion2B-en-research-safe"
+        output_path=args.output_path,
+        start_idx=args.start_idx,
+        end_idx=args.end_idx,
+        batch_size=args.batch_size,
+        checkpoint_size=args.checkpoint_size,
+        model_name=args.model_name,
+        dataset_name=args.dataset_name
     )
     
     # Run processing

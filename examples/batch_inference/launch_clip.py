@@ -41,11 +41,11 @@ def main():
                         help='Global start index in dataset')
     parser.add_argument('--end-idx',
                         type=int,
-                        default=5000,
+                        default=50000,
                         help='Global end index in dataset')
     parser.add_argument('--num-jobs',
                         type=int,
-                        default=1,
+                        default=2,
                         help='Number of jobs to partition the work across')
     parser.add_argument('--run-as-job',
                         action='store_true',
