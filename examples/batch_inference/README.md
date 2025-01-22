@@ -17,14 +17,10 @@ sky jobs launch clip.yaml --env-file ~/.env
 
 To construct the database from embeddings: 
 ```
-sky launch build_vectordb.yaml 
+sky jobs launch build_vectordb.yaml 
 ```
 
 To query the constructed database: 
 ```
-python query_vectordb.py \
-  --text "a photo of cloud" \
-  --collection-name clip_embeddings \
-  --persist-dir ./chroma_db \
-  --n-results 5
+sky launch serve_vectordb.yaml
 ```
