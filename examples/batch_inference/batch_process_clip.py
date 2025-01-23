@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import pickle
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -9,7 +10,7 @@ import torch
 
 
 class ClipBatchProcessor(HuggingFaceDatasetMixin,
-                         BatchInferenceProcessor[Dict[str, Any], np.ndarray]):
+                         BatchInferenceProcessor[Dict[str, Any], Tuple[str, bytes]]):
     """Example implementation for processing images with CLIP."""
 
     def __init__(
@@ -37,48 +38,50 @@ class ClipBatchProcessor(HuggingFaceDatasetMixin,
         self.preprocess = preprocess
 
     async def run_model_inference(
-            self, model_inputs: List[torch.Tensor]) -> List[np.ndarray]:
+            self, model_inputs: List[Tuple[str, torch.Tensor]]) -> List[Tuple[str, bytes]]:
         """Run CLIP model on a batch of preprocessed images."""
+        # Unzip the URLs and tensors
+        urls, tensors = zip(*model_inputs)
+        
         # Stack inputs into a batch
-        batch_tensor = torch.stack(model_inputs).to(self.device)
+        batch_tensor = torch.stack(tensors).to(self.device)
 
         # Run inference
         with torch.no_grad():
             features = self.model.encode_image(batch_tensor)
             features /= features.norm(dim=-1, keepdim=True)
 
-        # Convert to numpy arrays
-        return features.cpu().numpy()
+        # Convert to numpy arrays, then to bytes, and pair with URLs
+        embeddings = features.cpu().numpy()
+        embedding_bytes = [pickle.dumps((url, arr.tobytes())) for url, arr in zip(urls, embeddings)]
+        return embedding_bytes
 
-    async def do_data_loading(self) -> AsyncIterator[Tuple[int, torch.Tensor]]:
+    async def do_data_loading(self) -> AsyncIterator[Tuple[int, Tuple[str, torch.Tensor]]]:
         """Load and preprocess data in parallel."""
         if self.model is None:
             await self.setup_model()
 
-        # Create a buffer to store preprocessing tasks
         preprocessing_tasks = []
-        buffer_size = self.batch_size * 2  # Maintain 2 batches worth of preprocessing tasks
+        buffer_size = self.batch_size * 2
 
         async for idx, item in self.get_dataset_iterator():
             # Clean up completed tasks when buffer is full
             if len(preprocessing_tasks) >= buffer_size:
-                # Wait for at least one task to complete
                 done, pending = await asyncio.wait(
                     preprocessing_tasks, return_when=asyncio.FIRST_COMPLETED)
                 preprocessing_tasks = list(pending)
 
-                # Yield completed results
                 for task in done:
                     result = await task
-                    if result[
-                            1] is not None:  # Only yield successfully preprocessed items
+                    if result[1][1] is not None:  # Check tensor in (idx, (url, tensor))
                         yield result
 
             # Start new preprocessing task
             async def preprocess_with_index(idx, item):
                 async with self.preprocessing_semaphore:
+                    url = item["url"]
                     tensor = await self._preprocess_input(item)
-                    return (idx, tensor)
+                    return (idx, (url, tensor))  # Return tuple with url
 
             task = asyncio.create_task(preprocess_with_index(idx, item))
             preprocessing_tasks.append(task)
@@ -87,8 +90,7 @@ class ClipBatchProcessor(HuggingFaceDatasetMixin,
         if preprocessing_tasks:
             done = await asyncio.gather(*preprocessing_tasks)
             for result in done:
-                if result[
-                        1] is not None:  # Only yield successfully preprocessed items
+                if result[1][1] is not None:  # Check tensor in (idx, (url, tensor))
                     yield result
 
     async def _preprocess_input(self,

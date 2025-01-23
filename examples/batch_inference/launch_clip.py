@@ -41,15 +41,15 @@ def main():
                         help='Global start index in dataset')
     parser.add_argument('--end-idx',
                         type=int,
-                        default=5000,
+                        default=10000,
                         help='Global end index in dataset')
     parser.add_argument('--num-jobs',
                         type=int,
                         default=2,
                         help='Number of jobs to partition the work across')
-    parser.add_argument('--run-as-job',
+    parser.add_argument('--run-as-launch',
                         action='store_true',
-                        help='Run as a job')
+                        help='Run as a launch')
 
     args = parser.parse_args()
 
@@ -82,7 +82,7 @@ def main():
             'HF_TOKEN': hf_token,
         })
 
-        if args.run_as_job:
+        if not args.run_as_launch:
             # Launch the job
             sky.jobs.launch(
                 task_copy,

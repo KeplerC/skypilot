@@ -46,6 +46,7 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
             max_concurrent_tasks: Maximum number of concurrent tasks
         """
         self.output_path = Path(output_path)
+        self.output_path.mkdir(parents=True, exist_ok=True)  # Create directory if it doesn't exist
         self.start_idx = start_idx
         self.end_idx = end_idx
         self.batch_size = batch_size
@@ -90,22 +91,20 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
             self.write_pbar.close()
 
     def _setup_output_file(self):
-        """Set up the output parquet file and determine start index."""
+        """Set up the output directory and determine start index."""
         if not self.output_path.exists():
-            # Create empty parquet file with schema
-            empty_df = pd.DataFrame({
-                'idx': pd.Series([], dtype='int64'),
-                'output': pd.Series([], dtype='object')
-            })
-            table = pa.Table.from_pandas(empty_df)
-            pq.write_table(table, self.output_path)
+            self.output_path.mkdir(parents=True)
         else:
-            # Read existing file and update start_idx to resume from last checkpoint
-            existing_table = pq.read_table(self.output_path)
-            existing_df = existing_table.to_pandas()
-            if not existing_df.empty:
-                last_processed_idx = existing_df['idx'].max()
-                self.start_idx = max(self.start_idx, last_processed_idx + 1)
+            # Find the highest processed index from existing partitions
+            partition_files = list(self.output_path.glob("*.parquet"))
+            if partition_files:
+                max_idx = 0
+                for file in partition_files:
+                    table = pq.read_table(file)
+                    df = table.to_pandas()
+                    if not df.empty:
+                        max_idx = max(max_idx, df['idx'].max())
+                self.start_idx = max(self.start_idx, max_idx + 1)
                 logging.info(f"Resuming from index {self.start_idx}")
 
     @abc.abstractmethod
@@ -194,18 +193,18 @@ class BatchProcessor(Generic[InputType, OutputType], abc.ABC):
             self.write_queue.task_done()
 
     async def _checkpoint_results(self, results: List[Dict[str, Any]]):
-        """Checkpoint results to parquet file."""
-        # Read existing data
-        existing_table = pq.read_table(self.output_path)
-        existing_df = existing_table.to_pandas()
-
-        # Create new dataframe with results and concatenate
+        """Checkpoint results to a new parquet partition."""
+        # Create new dataframe with results
         new_df = pd.DataFrame(results)
-        combined_df = pd.concat([existing_df, new_df], ignore_index=True)
-
-        # Write back to parquet file
-        table = pa.Table.from_pandas(combined_df)
-        pq.write_table(table, self.output_path)
+        
+        # Generate partition filename based on index range
+        min_idx = new_df['idx'].min()
+        max_idx = new_df['idx'].max()
+        partition_file = self.output_path / f"part_{min_idx:08d}_{max_idx:08d}.parquet"
+        
+        # Write to new partition file
+        table = pa.Table.from_pandas(new_df)
+        pq.write_table(table, partition_file)
 
     async def run(self):
         """Run the batch processing pipeline."""
