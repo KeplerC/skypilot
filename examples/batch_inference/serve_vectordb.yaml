@@ -25,3 +25,8 @@ run: |
     --persist-dir /vectordb/chroma \
     --host 0.0.0.0 \
     --port 8000 
+
+service:
+  replicas: 1
+  readiness_probe:
+    path: /health

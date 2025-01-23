@@ -21,7 +21,7 @@ sky jobs launch build_vectordb.yaml
 
 To query the constructed database: 
 ```
-sky launch -n vecdb_serve serve_vectordb.yaml
+sky launch -c vecdb_serve serve_vectordb.yaml
 ```
 
 ```
