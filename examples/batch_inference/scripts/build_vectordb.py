@@ -34,10 +34,9 @@ def process_batch(collection, batch_df):
     
     # Unpack the pickled data to get urls and embeddings
     unpacked_data = [pickle.loads(row) for row in batch_df['output']]
-    urls, embedding_bytes = zip(*unpacked_data)
-    
-    # Convert bytes back to numpy arrays
-    embeddings = [np.frombuffer(emb_bytes).reshape(-1) for emb_bytes in embedding_bytes]
+    urls, embeddings = zip(*unpacked_data)
+
+    embeddings = [embedding for embedding in embeddings]
     metadatas = [{'url': url} for url in urls]
 
     # Add to collection

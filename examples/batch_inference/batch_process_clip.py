@@ -8,7 +8,6 @@ from processors import BatchInferenceProcessor
 from processors import HuggingFaceDatasetMixin
 import torch
 
-
 class ClipBatchProcessor(HuggingFaceDatasetMixin,
                          BatchInferenceProcessor[Dict[str, Any], Tuple[str, bytes]]):
     """Example implementation for processing images with CLIP."""
@@ -53,7 +52,7 @@ class ClipBatchProcessor(HuggingFaceDatasetMixin,
 
         # Convert to numpy arrays, then to bytes, and pair with URLs
         embeddings = features.cpu().numpy()
-        embedding_bytes = [pickle.dumps((url, arr.tobytes())) for url, arr in zip(urls, embeddings)]
+        embedding_bytes = [pickle.dumps((url, arr)) for url, arr in zip(urls, embeddings)]
         return embedding_bytes
 
     async def do_data_loading(self) -> AsyncIterator[Tuple[int, Tuple[str, torch.Tensor]]]:
