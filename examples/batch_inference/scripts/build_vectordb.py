@@ -29,7 +29,7 @@ def process_batch(collection, batch_df):
     """Process a batch of data and add it to the ChromaDB collection."""
     # Extract data from DataFrame
     ids = [str(idx) for idx in batch_df.index]
-    embeddings = batch_df['embedding'].tolist()
+    embeddings = batch_df['output'].tolist()
     metadatas = [{'url': url} for url in batch_df['url']]
 
     # Add to collection
@@ -51,7 +51,7 @@ def main():
                         type=int,
                         default=1000,
                         help='Batch size for processing')
-    parser.add_argument('--mount-path',
+    parser.add_argument('--embeddings-dir',
                         type=str,
                         default='/clip_embeddings',
                         help='Path to mounted bucket containing parquet files')
@@ -80,7 +80,7 @@ def main():
             logger.info(f"Using existing collection: {args.collection_name}")
 
         # List parquet files from mounted directory
-        parquet_files = list_local_parquet_files(args.mount_path, args.prefix)
+        parquet_files = list_local_parquet_files(args.embeddings_dir, args.prefix)
         logger.info(f"Found {len(parquet_files)} parquet files")
 
         # Process each parquet file
