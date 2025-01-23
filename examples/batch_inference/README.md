@@ -11,8 +11,7 @@ HF_TOKEN=hf_xxxxx
 
 To run the experiments 
 ```
-sky launch clip.yaml --env-file ~/.env
-sky jobs launch clip.yaml --env-file ~/.env
+python3 launch_clip.py
 ```
 
 To construct the database from embeddings: 
@@ -23,4 +22,11 @@ sky jobs launch build_vectordb.yaml
 To query the constructed database: 
 ```
 sky launch serve_vectordb.yaml
+```
+
+```
+ENDPOINT=$(sky status --ip sky-1b93-kych)
+curl POST http://$ENDPOINT:8000/search \
+  -H "Content-Type: application/json" \
+  -d '{"text": "a photo of a cat", "n_results": 5}' | jq .
 ```

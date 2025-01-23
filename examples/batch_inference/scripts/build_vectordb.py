@@ -4,6 +4,8 @@ import logging
 import os
 import shutil
 import tempfile
+import pickle
+import numpy as np
 
 import chromadb
 import pandas as pd
@@ -27,10 +29,16 @@ def read_parquet_file(file_path: str) -> pd.DataFrame:
 
 def process_batch(collection, batch_df):
     """Process a batch of data and add it to the ChromaDB collection."""
-    # Extract data from DataFrame
+    # Extract data from DataFrame and unpack the pickled data
     ids = [str(idx) for idx in batch_df.index]
-    embeddings = batch_df['output'].tolist()
-    metadatas = [{'url': url} for url in batch_df['url']]
+    
+    # Unpack the pickled data to get urls and embeddings
+    unpacked_data = [pickle.loads(row) for row in batch_df['output']]
+    urls, embedding_bytes = zip(*unpacked_data)
+    
+    # Convert bytes back to numpy arrays
+    embeddings = [np.frombuffer(emb_bytes).reshape(-1) for emb_bytes in embedding_bytes]
+    metadatas = [{'url': url} for url in urls]
 
     # Add to collection
     collection.add(ids=ids, embeddings=embeddings, metadatas=metadatas)
