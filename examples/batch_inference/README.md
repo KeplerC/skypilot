@@ -21,11 +21,11 @@ sky jobs launch build_vectordb.yaml
 
 To query the constructed database: 
 ```
-sky launch serve_vectordb.yaml
+sky launch -n vecdb_serve serve_vectordb.yaml
 ```
 
 ```
-ENDPOINT=$(sky status --ip sky-1b93-kych)
+ENDPOINT=$(sky status --ip vecdb_serve)
 curl POST http://$ENDPOINT:8000/search \
   -H "Content-Type: application/json" \
   -d '{"text": "a photo of a cat", "n_results": 5}' | jq .

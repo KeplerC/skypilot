@@ -2,13 +2,13 @@ name: vectordb-serve
 
 resources:
   cloud: aws
-  accelerators: {L4:1, A10G:1, A10:1, V100:1}  # For CLIP model inference
+  accelerators: {L4:1, A10G:1, A10:1, V100:1}
   memory: 32+
-  ports: 8000  # For FastAPI server
+  ports: 8000
 
 file_mounts:
   /vectordb:
-    name: sky-vectordb-bucket 
+    name: sky-vectordb
     mode: MOUNT
 
 setup: |
