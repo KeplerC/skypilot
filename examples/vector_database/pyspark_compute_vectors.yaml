@@ -1,0 +1,68 @@
+name: pyspark-vector-compute
+
+resources:
+  cpus: 8+  # Each node should have many CPUs for Spark executors
+  memory: 32+  # Each node needs significant memory for Spark
+  accelerators: T4:1  # Multiple GPUs per node for parallel processing
+
+num_nodes: 2  # Create a larger cluster for Spark to manage
+
+workdir: .
+
+file_mounts:
+  /data: 
+    name: sky-vector-db  # Replace with your bucket name
+    mode: MOUNT
+  
+envs:
+  HF_TOKEN: 
+
+setup: |
+  # Install required packages
+  pip install pyspark==3.5.0
+  pip install torch torchvision open_clip_torch
+  pip install pandas pyarrow datasets
+
+  # Download Spark if it is not already available
+  if [ ! -d "$HOME/spark-3.5.0-bin-hadoop3" ]; then
+      wget https://archive.apache.org/dist/spark/spark-3.5.0/spark-3.5.0-bin-hadoop3.tgz
+      tar xf spark-3.5.0-bin-hadoop3.tgz -C $HOME
+  fi
+
+  # Set Spark home and update PATH
+  export SPARK_HOME=$HOME/spark-3.5.0-bin-hadoop3
+  export PATH=$SPARK_HOME/bin:$PATH
+
+  # Extract the primary (head node) IP from SKYPILOT_NODE_IPS
+  PRIMARY_IP=$(echo $SKYPILOT_NODE_IPS | awk '{print $1}')
+
+  # If head node, configure Spark and start the master; else, start a worker.
+  if [ "${SKYPILOT_NODE_RANK}" = "0" ]; then
+      # Create a Spark configuration directory
+      mkdir -p $HOME/.spark
+
+      # Write the Spark configuration using the head node IP for the master
+      echo "spark.master                     spark://$PRIMARY_IP:7077" > $HOME/.spark/spark-defaults.conf
+      echo "spark.driver.memory              32g" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.executor.memory            32g" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.driver.maxResultSize       20g" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.python.worker.memory       16g" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.executor.cores             8" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.task.cpus                  1" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.local.dir                  /tmp/spark" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.default.parallelism        96" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.sql.shuffle.partitions     96" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.executor.instances         1" >> $HOME/.spark/spark-defaults.conf
+
+      # Start the Spark master
+      $SPARK_HOME/sbin/start-master.sh
+  else
+      # Connect to the master running on the head node
+      $SPARK_HOME/sbin/start-worker.sh spark://$PRIMARY_IP:7077
+  fi
+
+run: |
+  # Only run on head node
+  if [ "${SKYPILOT_NODE_RANK}" = "0" ]; then
+    python scripts/pyspark_compute_vectors.py "$@"
+  fi 
