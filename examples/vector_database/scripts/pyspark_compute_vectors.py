@@ -22,7 +22,7 @@ from tqdm import tqdm
 
 def create_spark_session(app_name: str) -> SparkSession:
     """Create a Spark session with appropriate configuration."""
-    return (SparkSession.builder
+    spark = (SparkSession.builder
             .appName(app_name)
             .config('spark.task.maxFailures', 10)
             .config('spark.executor.heartbeatInterval', '20s')
@@ -33,6 +33,10 @@ def create_spark_session(app_name: str) -> SparkSession:
             .config('spark.executor.resource.gpu.vendor', 'nvidia.com')
             .config('spark.task.resource.gpu.amount', 1)  # Each task gets 1 GPU
             .getOrCreate())
+    
+    # Set checkpoint directory
+    spark.sparkContext.setCheckpointDir('/tmp/spark_checkpoints')
+    return spark
 
 
 class CLIPProcessor:
@@ -67,19 +71,17 @@ class CLIPProcessor:
 
 
 def process_partition(iterator: Iterator[Tuple[int, dict]],
-                     images_path: str,
                      model_name: str,
                      pretrained: str) -> Iterator[Tuple[int, bytes]]:
     """Process a partition of the dataset.
     
     Args:
         iterator: Iterator over (index, item) pairs from the dataset
-        images_path: Path to save images
         model_name: CLIP model name
         pretrained: CLIP model pretrained weights
     
     Yields:
-        Tuples of (index, pickled(image_path, embedding))
+        Tuples of (index, pickled embedding)
     """
     # Initialize CLIP processor
     processor = CLIPProcessor(model_name=model_name, pretrained=pretrained)
@@ -93,16 +95,8 @@ def process_partition(iterator: Iterator[Tuple[int, dict]],
             image = item['image']
             if image is None:
                 continue
-                
-            # Save image
-            subdir = str(idx // 100000).zfill(4)
-            save_dir = Path(images_path) / subdir
-            save_dir.mkdir(parents=True, exist_ok=True)
-            image_path = save_dir / f'{idx}.jpg'
-            image.save(image_path, format='JPEG', quality=95)
-            rel_path = str(Path(subdir) / f'{idx}.jpg')
             
-            batch.append((idx, image, rel_path))
+            batch.append((idx, image))
             
             if len(batch) >= batch_size:
                 yield from process_batch(batch, processor)
@@ -117,35 +111,47 @@ def process_partition(iterator: Iterator[Tuple[int, dict]],
         yield from process_batch(batch, processor)
 
 
-def process_batch(batch: List[Tuple[int, Image.Image, str]], 
+def process_batch(batch: List[Tuple[int, Image.Image]], 
                  processor: CLIPProcessor) -> Iterator[Tuple[int, bytes]]:
     """Process a batch of images together."""
-    for idx, image, rel_path in batch:
+    for idx, image in batch:
         embedding = processor.compute_embedding(image)
         if embedding is not None:
-            yield (idx, pickle.dumps((rel_path, embedding)))
+            yield (idx, pickle.dumps(embedding))
 
 
 def create_dataset_rdd(spark, start_idx: int, end_idx: int, num_partitions: int):
-    """Create an RDD from the dataset with proper partitioning."""
     from datasets import load_dataset
     
-    # Load dataset
+    # Load dataset once
     dataset = load_dataset('ILSVRC/imagenet-1k',
                           streaming=True,
                           trust_remote_code=True)['train']
     
-    if start_idx > 0:
-        dataset = dataset.skip(start_idx)
+    # Create batches of indices
+    batch_size = (end_idx - start_idx) // num_partitions
     
-    # Take only up to end_idx items
-    dataset = dataset.take(end_idx - start_idx)
+    def process_batch(start, end):
+        items = list(dataset.skip(start).take(end - start))
+        return [(idx, item) for idx, item in enumerate(items, start=start)]
     
-    # Create initial RDD with proper partitioning
+    # Create RDD with batched loading
     return spark.sparkContext.parallelize(
-        enumerate(dataset, start=start_idx),
+        [(i, i + batch_size) for i in range(start_idx, end_idx, batch_size)],
         num_partitions
-    ).repartition(num_partitions)
+    ).flatMap(lambda x: process_batch(*x))
+
+def load_dataset_item(idx: int):
+    """Load a single item from the dataset."""
+    from datasets import load_dataset
+    
+    # Load dataset in streaming mode
+    dataset = load_dataset('ILSVRC/imagenet-1k',
+                          streaming=True,
+                          trust_remote_code=True)['train']
+    
+    # Skip to the desired index and take one item
+    return next(iter(dataset.skip(idx).take(1)))
 
 
 def main():
@@ -155,10 +161,6 @@ def main():
                        type=str,
                        default='/data/embeddings',
                        help='Path to output directory')
-    parser.add_argument('--images-path',
-                       type=str,
-                       default='/data/images',
-                       help='Path to store images')
     parser.add_argument('--start-idx',
                        type=int,
                        default=0,
@@ -169,7 +171,7 @@ def main():
                        help='Ending index in dataset')
     parser.add_argument('--num-partitions',
                        type=int,
-                       default=16,
+                       default=100,
                        help='Number of Spark partitions')
     parser.add_argument('--model-name',
                        type=str,
@@ -190,20 +192,27 @@ def main():
     # Define schema for the output DataFrame
     schema = StructType([
         StructField('idx', IntegerType(), False),
-        StructField('output', BinaryType(), False)
+        StructField('embedding', BinaryType(), False)
     ])
     
-    # Process data in parallel with proper checkpointing
+    # Create checkpoint directory if it doesn't exist
+    os.makedirs('/tmp/spark_checkpoints', exist_ok=True)
+    
+    # Add monitoring
     processed_rdd = rdd.mapPartitions(
         lambda iterator: process_partition(
             iterator,
-            args.images_path,
             args.model_name,
             args.pretrained
-        ))
+        )).cache()  # Cache to prevent recomputation
     
-    # Checkpoint every N partitions to handle failures
-    processed_rdd.checkpoint()
+    # Add progress monitoring
+    count = processed_rdd.count()
+    print(f"Processed {count} items")
+    
+    # Add periodic checkpointing
+    if count > 0:
+        processed_rdd.checkpoint()
     
     # Convert to DataFrame and write in parallel
     df = spark.createDataFrame(processed_rdd, schema)

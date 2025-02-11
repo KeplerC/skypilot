@@ -5,7 +5,7 @@ resources:
   memory: 32+  # Each node needs significant memory for Spark
   accelerators: T4:1  # Multiple GPUs per node for parallel processing
 
-num_nodes: 2  # Create a larger cluster for Spark to manage
+num_nodes: 1  # Create a larger cluster for Spark to manage
 
 workdir: .
 
@@ -48,7 +48,7 @@ setup: |
       echo "spark.driver.maxResultSize       20g" >> $HOME/.spark/spark-defaults.conf
       echo "spark.python.worker.memory       16g" >> $HOME/.spark/spark-defaults.conf
       echo "spark.executor.cores             8" >> $HOME/.spark/spark-defaults.conf
-      echo "spark.task.cpus                  1" >> $HOME/.spark/spark-defaults.conf
+      echo "spark.task.cpus                  8" >> $HOME/.spark/spark-defaults.conf
       echo "spark.local.dir                  /tmp/spark" >> $HOME/.spark/spark-defaults.conf
       echo "spark.default.parallelism        96" >> $HOME/.spark/spark-defaults.conf
       echo "spark.sql.shuffle.partitions     96" >> $HOME/.spark/spark-defaults.conf
