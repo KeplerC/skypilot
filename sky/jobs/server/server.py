@@ -106,9 +106,10 @@ async def download_logs(
     )
 
 
-@router.get('/dashboard')
+@router.get('/dashboard{path:path}')
 async def dashboard(request: fastapi.Request,
-                    user_hash: str) -> fastapi.Response:
+                    user_hash: str,
+                    path: str = "") -> fastapi.Response:
     # Note: before #4717, each user had their own controller, and thus their own
     # dashboard. Now, all users share the same controller, so this isn't really
     # necessary. TODO(cooperc): clean up.
@@ -162,9 +163,11 @@ async def dashboard(request: fastapi.Request,
         async with httpx.AsyncClient() as client:
             # Make the request and get the response
             response = await client.request(
-                method='GET',
-                url=f'{dashboard_url}',
+                method=request.method,
+                url=f'{dashboard_url}{path}',
                 headers=request.headers.raw,
+                content=await request.body(),
+                params=request.query_params,
             )
 
             # Create a new response with the content already read
