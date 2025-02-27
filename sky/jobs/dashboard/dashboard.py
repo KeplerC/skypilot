@@ -140,7 +140,7 @@ def home():
         all_managed_jobs = managed_jobs.load_managed_job_queue(job_table)
 
     timestamp = datetime.datetime.now(datetime.timezone.utc)
-    print(all_managed_jobs)
+    app.logger.warning(all_managed_jobs)
     rows = managed_jobs.format_job_table(all_managed_jobs,
                                          show_all=True,
                                          return_rows=True)
