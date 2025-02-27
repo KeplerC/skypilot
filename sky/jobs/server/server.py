@@ -172,12 +172,24 @@ async def dashboard(request: fastapi.Request,
 
             # Create a new response with the content already read
             content = await response.aread()
-            # Get content type safely with a default
+            # Get content type safely with multiple fallbacks
             content_type = None
-            if hasattr(response.headers, 'get'):
-                content_type = response.headers.get('content-type')
-            elif isinstance(response.headers, dict):
-                content_type = response.headers.get('content-type')
+            try:
+                if hasattr(response.headers, 'get'):
+                    content_type = response.headers.get('content-type')
+                elif isinstance(response.headers, dict):
+                    content_type = response.headers.get('content-type')
+                elif isinstance(response.headers, str):
+                    # If headers is a string, we can't extract content-type directly
+                    # Let FastAPI handle it based on content
+                    logger.warning(f"Headers {response.headers} is a string, using default content type")
+                
+                # If we have a content_type and it's a string containing multiple types, extract the first
+                if isinstance(content_type, str) and ';' in content_type:
+                    content_type = content_type.split(';')[0].strip()
+            except Exception as e:
+                logger.warning(f"Error extracting content type: {e}")
+                # Continue with content_type as None
             
             return fastapi.Response(
                 content=content,
