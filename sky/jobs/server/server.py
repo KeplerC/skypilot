@@ -106,7 +106,7 @@ async def download_logs(
     )
 
 
-@router.get('/dashboard{path:path}')
+@router.get('/dashboard/{path:path}')
 async def dashboard(request: fastapi.Request,
                     user_hash: str,
                     path: str = "") -> fastapi.Response:
