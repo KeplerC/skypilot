@@ -172,11 +172,18 @@ async def dashboard(request: fastapi.Request,
 
             # Create a new response with the content already read
             content = await response.aread()
+            # Get content type safely with a default
+            content_type = None
+            if hasattr(response.headers, 'get'):
+                content_type = response.headers.get('content-type')
+            elif isinstance(response.headers, dict):
+                content_type = response.headers.get('content-type')
+            
             return fastapi.Response(
                 content=content,
                 status_code=response.status_code,
                 headers=dict(response.headers),
-                media_type=response.headers.get('content-type'))
+                media_type=content_type)
     except Exception as e:
         msg = (f'Failed to forward request to dashboard: '
                f'{common_utils.format_exception(e, use_bracket=True)}')
