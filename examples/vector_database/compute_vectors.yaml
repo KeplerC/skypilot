@@ -22,10 +22,6 @@ file_mounts:
     name: sky-demo-embedding
     # this needs to be the same as the source in the build_vectordb.yaml
     mode: MOUNT
-  /images:
-    name: sky-demo-image
-    # this needs to be the same as the source in the build_vectordb.yaml
-    mode: MOUNT
 
 envs:
   # These env vars are required but should be passed in at launch time.
@@ -45,5 +41,6 @@ run: |
     --start-idx ${START_IDX} \
     --end-idx ${END_IDX} \
     --batch-size 64 \
-    --checkpoint-size 1000 
+    --checkpoint-size 1000 \
+    --dataset-name "laion/relaion2B-en-research-safe"
   echo "Processing complete. Results saved in node-specific files under /output/"

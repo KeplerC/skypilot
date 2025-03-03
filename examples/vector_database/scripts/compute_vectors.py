@@ -1,5 +1,5 @@
 """
-This script is responsible for computing the embeddings for the ImageNet dataset.
+This script is responsible for computing the embeddings for the LAION dataset.
 """
 
 import abc
@@ -11,8 +11,7 @@ import os
 from pathlib import Path
 import pickle
 import shutil
-from typing import (Any, AsyncIterator, Dict, Generic, List, Optional, Tuple,
-                    TypeVar)
+from typing import (Any, AsyncIterator, Dict, List, Optional, Tuple)
 
 import numpy as np
 import pandas as pd
@@ -20,12 +19,13 @@ from PIL import Image
 import pyarrow.parquet as pq
 import torch
 from tqdm import tqdm
+import aiohttp
 
 
 class BatchProcessor():
-    """Process ImageNet images with CLIP.
+    """Process LAION images with CLIP.
     
-    This script is responsible for computing the embeddings for the ImageNet dataset.
+    This script is responsible for computing the embeddings for the LAION dataset.
     1. setup_model initializes the model
     2. get_dataset_iterator will yield individual items from the dataset
     3. do_data_loading will get an item from the dataset iterator and do any preprocessing
@@ -34,9 +34,8 @@ class BatchProcessor():
 
     def __init__(self,
                  output_path: str,
-                 images_path: str = '/images',
                  model_name: str = 'ViT-bigG-14',
-                 dataset_name: str = 'ILSVRC/imagenet-1k',
+                 dataset_name: str = 'laion/relaion2B-en-research-safe',
                  pretrained: str = 'laion2b_s39b_b160k',
                  device: Optional[str] = None,
                  split: str = 'train',
@@ -44,17 +43,14 @@ class BatchProcessor():
                  batch_size: int = 32,
                  checkpoint_size: int = 100,
                  start_idx: int = 0,
-                 end_idx: Optional[int] = None):
+                 end_idx: Optional[int] = None,
+                 max_preprocessing_tasks: int = 10):
         self.output_path = Path(output_path)  # Convert to Path object
-        self.images_path = Path(images_path)  # Path to store images
         self.batch_size = batch_size
         self.checkpoint_size = checkpoint_size
         self.start_idx = start_idx
         self.end_idx = end_idx
         self._current_batch = []
-
-        # Create images directory if it doesn't exist
-        self.images_path.mkdir(parents=True, exist_ok=True)
 
         # CLIP-specific attributes
         self.model_name = model_name
@@ -66,6 +62,9 @@ class BatchProcessor():
         self.model = None
         self.preprocess = None
         self.partition_counter = 0
+        
+        # Control parallel preprocessing
+        self.preprocessing_semaphore = asyncio.Semaphore(max_preprocessing_tasks)
 
     async def setup_model(self):
         """Set up the CLIP model."""
@@ -81,8 +80,8 @@ class BatchProcessor():
         from datasets import load_dataset
 
         dataset = load_dataset(self.dataset_name,
-                               streaming=self.streaming,
-                               trust_remote_code=True)[self.split]
+                             streaming=self.streaming,
+                             trust_remote_code=True)[self.split]
 
         if self.start_idx > 0:
             dataset = dataset.skip(self.start_idx)
@@ -92,37 +91,58 @@ class BatchProcessor():
                 break
             yield idx, item
 
-    async def do_data_loading(
-            self) -> AsyncIterator[Tuple[int, Tuple[torch.Tensor, Any]]]:
-        """Load and preprocess ImageNet images."""
+    async def _preprocess_input(self, url: str) -> Optional[torch.Tensor]:
+        """Download and preprocess a single image from URL."""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=10, ssl=False) as response:
+                    if response.status == 200:
+                        data = await response.read()
+                        img = Image.open(BytesIO(data))
+                        return self.preprocess(img)
+        except Exception as e:
+            logging.debug(f"Error preprocessing image from {url}: {str(e)}")
+        return None
+
+    async def do_data_loading(self) -> AsyncIterator[Tuple[int, Tuple[str, torch.Tensor]]]:
+        """Load and preprocess LAION images in parallel."""
+        if self.model is None:
+            await self.setup_model()
+
+        preprocessing_tasks = []
+        buffer_size = self.batch_size * 2
 
         async for idx, item in self.get_dataset_iterator():
-            try:
-                # ImageNet provides PIL Images directly
-                tensor = self.preprocess(item['image'])
-                if tensor is not None:
-                    # Pass through both the tensor and original image
-                    yield idx, (tensor, item['image'])
-            except Exception as e:
-                logging.debug(
-                    f'Error preprocessing image at index {idx}: {str(e)}')
+            # Clean up completed tasks when buffer is full
+            if len(preprocessing_tasks) >= buffer_size:
+                done, pending = await asyncio.wait(
+                    preprocessing_tasks, return_when=asyncio.FIRST_COMPLETED)
+                preprocessing_tasks = list(pending)
 
-    def save_image(self, idx: int, image: Image.Image) -> str:
-        """Save image to the mounted bucket and return its path."""
-        # Create a subdirectory based on the first few digits of the index to avoid too many files in one directory
-        subdir = str(idx // 100000).zfill(4)
-        save_dir = self.images_path / subdir
-        save_dir.mkdir(parents=True, exist_ok=True)
+                for task in done:
+                    result = await task
+                    if result[1][1] is not None:  # Check tensor in (idx, (url, tensor))
+                        yield result
 
-        # Save image with index as filename
-        image_path = save_dir / f'{idx}.jpg'
-        image.save(image_path, format='JPEG', quality=95)
+            # Start new preprocessing task
+            async def preprocess_with_index(idx, item):
+                async with self.preprocessing_semaphore:
+                    url = item["url"]
+                    tensor = await self._preprocess_input(url)
+                    return (idx, (url, tensor))  # Return tuple with url
 
-        # Return relative path from images root
-        return str(Path(subdir) / f'{idx}.jpg')
+            task = asyncio.create_task(preprocess_with_index(idx, item))
+            preprocessing_tasks.append(task)
+
+        # Wait for and yield remaining results
+        if preprocessing_tasks:
+            done = await asyncio.gather(*preprocessing_tasks)
+            for result in done:
+                if result[1][1] is not None:  # Check tensor in (idx, (url, tensor))
+                    yield result
 
     async def do_batch_processing(
-        self, batch: List[Tuple[int, Tuple[torch.Tensor, Any]]]
+        self, batch: List[Tuple[int, Tuple[str, torch.Tensor]]]
     ) -> List[Tuple[int, bytes]]:
         """Process a batch of images through CLIP."""
         if self.model is None:
@@ -130,10 +150,10 @@ class BatchProcessor():
 
         # Unpack the batch
         indices, batch_data = zip(*batch)
-        model_inputs, original_images = zip(*batch_data)
+        urls, tensors = zip(*batch_data)
 
         # Stack inputs into a batch
-        batch_tensor = torch.stack(model_inputs).to(self.device)
+        batch_tensor = torch.stack(tensors).to(self.device)
 
         # Run inference
         with torch.no_grad():
@@ -143,15 +163,9 @@ class BatchProcessor():
         # Convert to numpy arrays
         embeddings = features.cpu().numpy()
 
-        # Save images and store their paths
-        image_paths = {}
-        for idx, img in zip(indices, original_images):
-            image_path = self.save_image(idx, img)
-            image_paths[idx] = image_path
-
-        # Return both embeddings and image paths
-        return [(idx, pickle.dumps((image_paths[idx], arr)))
-                for idx, arr in zip(indices, embeddings)]
+        # Return embeddings paired with URLs
+        return [(idx, pickle.dumps((url, arr)))
+                for idx, url, arr in zip(indices, urls, embeddings)]
 
     async def find_existing_progress(self) -> Tuple[int, int]:
         """
@@ -255,7 +269,7 @@ async def main():
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description='Run CLIP batch processing on ImageNet')
+        description='Run CLIP batch processing on LAION')
     parser.add_argument('--output-path',
                         type=str,
                         default='embeddings.parquet',
@@ -281,10 +295,10 @@ async def main():
                         default='ViT-bigG-14',
                         help='CLIP model name')
 
-    parser.add_argument('--images-path',
+    parser.add_argument('--dataset-name',
                         type=str,
-                        default='/images',
-                        help='Path to store images')
+                        default='laion/relaion2B-en-research-safe',
+                        help='LAION dataset name')
 
     args = parser.parse_args()
 
@@ -300,7 +314,7 @@ async def main():
                                batch_size=args.batch_size,
                                checkpoint_size=args.checkpoint_size,
                                model_name=args.model_name,
-                               images_path=args.images_path)
+                               dataset_name=args.dataset_name)
 
     # Run processing
     await processor.run()
