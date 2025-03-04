@@ -1,15 +1,17 @@
 """
 Use skypilot to launch managed jobs that will run the embedding calculation.  
 
-This script is responsible for splitting the input dataset up among several workers,  
-then using skypilot to launch managed jobs for each worker. We use compute_vectors.yaml  
-to define the managed job info.
+This script is responsible for:
+1. Launching a monitoring service cluster
+2. Splitting the input dataset among several workers
+3. Launching worker clusters with unique worker IDs
 """
 
 #!/usr/bin/env python3
 
 import argparse
 import os
+import time
 
 import sky
 
@@ -40,6 +42,26 @@ def calculate_job_range(start_idx: int, end_idx: int, job_rank: int,
     return job_start, job_end
 
 
+def launch_monitoring_service() -> str:
+    """Launch the monitoring service cluster.
+    
+    Returns:
+        str: The public IP of the monitoring cluster
+    """
+    print("Launching monitoring service cluster...")
+    monitor_task = sky.Task.from_yaml('monitor_progress.yaml')
+    monitor_job = sky.launch(monitor_task)
+    
+    # # Wait for the cluster to be ready and get its IP
+    # sky.status()  # This ensures cluster info is up to date
+    # cluster_info = sky.global_user_state.get_cluster_from_name(monitor_task.name)
+    # if not cluster_info or not cluster_info.head_ip:
+    #     raise RuntimeError("Failed to get monitoring cluster IP")
+    
+    # print(f"Monitoring service launched at http://{cluster_info.head_ip}:8000")
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Launch batch CLIP inference jobs')
@@ -59,6 +81,9 @@ def main():
                         type=str,
                         default='~/.env',
                         help='Path to the environment file')
+    parser.add_argument('--skip-monitor',
+                        action='store_true',
+                        help='Skip launching the monitoring service')
     args = parser.parse_args()
 
     # Try to get HF_TOKEN from environment first, then ~/.env file
@@ -75,7 +100,14 @@ def main():
     if not hf_token:
         raise ValueError("HF_TOKEN not found in ~/.env or environment variable")
 
-    # Load the task template
+    # Launch monitoring service first (unless skipped)
+    monitor_ip = None
+    if not args.skip_monitor:
+        monitor_ip = launch_monitoring_service()
+        # Give the monitoring service a moment to start up
+        time.sleep(10)
+
+    # Load the worker task template
     task = sky.Task.from_yaml('compute_vectors.yaml')
 
     # Launch jobs for each partition
@@ -83,18 +115,29 @@ def main():
         # Calculate index range for this job
         job_start, job_end = calculate_job_range(args.start_idx, args.end_idx,
                                                  job_rank, args.num_jobs)
+        
+        # Create a unique worker ID
+        worker_id = f"worker_{job_rank}"
 
         # Update environment variables for this job
         task_copy = task.update_envs({
-            'START_IDX': job_start,
-            'END_IDX': job_end,
+            'START_IDX': str(job_start),  # Convert to string for env vars
+            'END_IDX': str(job_end),
             'HF_TOKEN': hf_token,
+            'WORKER_ID': worker_id,
         })
 
+        job_name = f'vector-compute-{job_start}-{job_end}'
+        print(f"Launching {job_name} with {worker_id}...")
+        
         sky.jobs.launch(
             task_copy,
-            name=f'vector-compute-{job_start}-{job_end}',
+            name=job_name,
         )
+
+    if monitor_ip:
+        print(f"\nAll jobs launched! Monitor progress at: http://{monitor_ip}:8000")
+        print("Note: It may take a few minutes for workers to start reporting metrics.")
 
 
 if __name__ == '__main__':

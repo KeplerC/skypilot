@@ -6,11 +6,13 @@ import abc
 import asyncio
 import base64
 from io import BytesIO
+import json
 import logging
 import os
 from pathlib import Path
 import pickle
 import shutil
+import time
 from typing import (Any, AsyncIterator, Dict, List, Optional, Tuple)
 
 import numpy as np
@@ -66,6 +68,16 @@ class BatchProcessor():
         # Control parallel preprocessing
         self.preprocessing_semaphore = asyncio.Semaphore(max_preprocessing_tasks)
 
+        # Progress tracking
+        self.metrics_path = Path(output_path).parent / 'metrics'
+        self.metrics_path.mkdir(exist_ok=True)
+        self.worker_id = os.getenv('WORKER_ID', 'unknown')
+        self.metrics_file = self.metrics_path / f'worker_{self.worker_id}.json'
+        self.processed_count = 0
+        self.failed_count = 0
+        self.start_time = time.time()
+        self.last_update_time = self.start_time
+
     async def setup_model(self):
         """Set up the CLIP model."""
         import open_clip
@@ -101,6 +113,7 @@ class BatchProcessor():
                         img = Image.open(BytesIO(data))
                         return self.preprocess(img)
         except Exception as e:
+            self.failed_count += 1
             logging.debug(f"Error preprocessing image from {url}: {str(e)}")
         return None
 
@@ -163,7 +176,10 @@ class BatchProcessor():
         # Convert to numpy arrays
         embeddings = features.cpu().numpy()
 
-        # Return embeddings paired with URLs
+        self.processed_count += len(batch)
+        if time.time() - self.last_update_time > 5:  # Update every 5 seconds
+            self.update_metrics()
+            
         return [(idx, pickle.dumps((url, arr)))
                 for idx, url, arr in zip(indices, urls, embeddings)]
 
@@ -223,44 +239,86 @@ class BatchProcessor():
         )
         self.partition_counter += 1
 
+    def update_metrics(self):
+        """Update progress metrics file."""
+        current_time = time.time()
+        elapsed_time = current_time - self.start_time
+        
+        metrics = {
+            'worker_id': self.worker_id,
+            'start_idx': self.start_idx,
+            'end_idx': self.end_idx,
+            'current_idx': self.start_idx + self.processed_count,
+            'processed_count': self.processed_count,
+            'failed_count': self.failed_count,
+            'elapsed_time': elapsed_time,
+            'images_per_second': self.processed_count / elapsed_time if elapsed_time > 0 else 0,
+            'last_update': current_time,
+            'status': 'running'
+        }
+        
+        # Write atomically using temporary file
+        temp_file = self.metrics_file.with_suffix('.tmp')
+        with open(temp_file, 'w') as f:
+            json.dump(metrics, f)
+        temp_file.replace(self.metrics_file)
+        self.last_update_time = current_time
+
     async def run(self):
         """
         Run the batch processing pipeline with recovery support.
         """
-        # Initialize the model
-        if self.model is None:
-            await self.setup_model()
+        try:
+            # Initialize the model
+            if self.model is None:
+                await self.setup_model()
 
-        # Find existing progress
-        resume_idx, self.partition_counter = await self.find_existing_progress()
-        self.start_idx = max(self.start_idx, resume_idx + 1)
+            # Find existing progress
+            resume_idx, self.partition_counter = await self.find_existing_progress()
+            self.start_idx = max(self.start_idx, resume_idx + 1)
 
-        logging.info(
-            f'Starting processing from index {self.start_idx} (partition {self.partition_counter})'
-        )
+            logging.info(
+                f'Starting processing from index {self.start_idx} (partition {self.partition_counter})'
+            )
 
-        results = []
+            results = []
 
-        async for idx, input_data in self.do_data_loading():
-            self._current_batch.append((idx, input_data))
-            if len(self._current_batch) >= self.batch_size:
-                batch_results = await self.do_batch_processing(
-                    self._current_batch)
+            async for idx, input_data in self.do_data_loading():
+                self._current_batch.append((idx, input_data))
+                if len(self._current_batch) >= self.batch_size:
+                    batch_results = await self.do_batch_processing(
+                        self._current_batch)
+                    results.extend(batch_results)
+                    self._current_batch = []
+
+                    if len(results) >= self.checkpoint_size:
+                        self.save_results_to_parquet(results)
+                        results.clear()
+
+            # Process any remaining items in the batch
+            if self._current_batch:
+                batch_results = await self.do_batch_processing(self._current_batch)
                 results.extend(batch_results)
-                self._current_batch = []
 
-                if len(results) >= self.checkpoint_size:
-                    self.save_results_to_parquet(results)
-                    results.clear()
+            # Write the final partition if there are any leftover results
+            if results:
+                self.save_results_to_parquet(results)
 
-        # Process any remaining items in the batch
-        if self._current_batch:
-            batch_results = await self.do_batch_processing(self._current_batch)
-            results.extend(batch_results)
-
-        # Write the final partition if there are any leftover results
-        if results:
-            self.save_results_to_parquet(results)
+            # Write final metrics
+            self.update_metrics()
+            
+            # Update status to completed
+            metrics = json.loads(self.metrics_file.read_text())
+            metrics['status'] = 'completed'
+            self.metrics_file.write_text(json.dumps(metrics))
+            
+        except Exception as e:
+            # Update status to failed
+            metrics = json.loads(self.metrics_file.read_text())
+            metrics['status'] = 'failed'
+            metrics['error'] = str(e)
+            self.metrics_file.write_text(json.dumps(metrics))
+            raise
 
 
 async def main():
