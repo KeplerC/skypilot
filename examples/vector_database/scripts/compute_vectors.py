@@ -73,10 +73,15 @@ class BatchProcessor():
         self.metrics_path.mkdir(exist_ok=True)
         self.worker_id = os.getenv('WORKER_ID', 'unknown')
         self.metrics_file = self.metrics_path / f'worker_{self.worker_id}.json'
+        self.metrics_history_file = self.metrics_path / f'worker_{self.worker_id}_history.json'
         self.processed_count = 0
         self.failed_count = 0
         self.start_time = time.time()
         self.last_update_time = self.start_time
+        self.session_id = f"{self.worker_id}_{int(self.start_time)}"
+        
+        # Load existing history if available
+        self.metrics_history = self._load_metrics_history()
 
     async def setup_model(self):
         """Set up the CLIP model."""
@@ -186,6 +191,8 @@ class BatchProcessor():
     async def find_existing_progress(self) -> Tuple[int, int]:
         """
         Find the highest processed index and partition counter from existing files.
+        Also loads history if available to support recovery after spot VM termination.
+        
         Returns:
             Tuple[int, int]: (highest_index, next_partition_number)
         """
@@ -197,9 +204,34 @@ class BatchProcessor():
             self.output_path.parent.glob(
                 f'{self.output_path.stem}_part_*.parquet'))
         print(f'Partition files: {partition_files}')
-        if not partition_files:
-            return self.start_idx, 0
-
+        
+        # First, load any existing history to recover from spot VM termination
+        self.metrics_history = self._load_metrics_history()
+        
+        # If we have existing history, extract the last known position
+        if self.metrics_history:
+            # Get the most recent session that was running before termination
+            recent_metrics = sorted(
+                [m for m in self.metrics_history if 'current_idx' in m and 'session_id' in m],
+                key=lambda x: x.get('timestamp', 0)
+            )
+            
+            # If we have history, record a termination event to mark the spot VM shutdown
+            if recent_metrics and recent_metrics[-1].get('status') == 'running':
+                termination_metrics = {
+                    'worker_id': self.worker_id,
+                    'session_id': recent_metrics[-1].get('session_id'),
+                    'event': 'termination',
+                    'timestamp': time.time(),
+                    'processed_count': recent_metrics[-1].get('processed_count', 0),
+                    'failed_count': recent_metrics[-1].get('failed_count', 0),
+                    'status': 'terminated'
+                }
+                self.metrics_history.append(termination_metrics)
+                self.save_metrics_history()  # Save this termination event
+                logging.info(f"Detected spot VM termination for session {termination_metrics['session_id']}")
+        
+        # Find highest index from partition files
         max_idx = self.start_idx
         max_partition = -1
 
@@ -216,7 +248,197 @@ class BatchProcessor():
             except Exception as e:
                 logging.warning(f'Error processing file {file}: {e}')
 
-        return max_idx, max_partition + 1
+        # Update start index based on history and partition files
+        recovered_idx = max_idx
+        if self.metrics_history:
+            # Get the last successfully processed index from history
+            for metrics in reversed(self.metrics_history):
+                if 'current_idx' in metrics and metrics.get('status') != 'starting':
+                    recovered_idx = max(recovered_idx, metrics.get('current_idx', self.start_idx))
+                    break
+        
+        logging.info(f"Recovered progress from index {recovered_idx} (partition {max_partition + 1})")
+        return recovered_idx, max_partition + 1
+
+    def _load_metrics_history(self) -> List[Dict]:
+        """Load existing metrics history if available."""
+        try:
+            if self.metrics_history_file.exists():
+                with open(self.metrics_history_file, 'r') as f:
+                    return json.load(f)
+            return []
+        except Exception as e:
+            logging.warning(f"Could not load metrics history: {e}")
+            return []
+
+    def save_metrics_history(self):
+        """
+        Save metrics history to file using atomic write.
+        This is a separate function to be called at critical points for spot VM safety.
+        """
+        try:
+            # Write history atomically
+            temp_history_file = self.metrics_history_file.with_suffix('.tmp')
+            with open(temp_history_file, 'w') as f:
+                json.dump(self.metrics_history, f)
+            shutil.copy2(temp_history_file, self.metrics_history_file)
+            os.remove(temp_history_file)
+        except Exception as e:
+            logging.error(f"Failed to save metrics history: {e}")
+
+    def update_metrics(self):
+        """Update progress metrics file and append to history."""
+        current_time = time.time()
+        elapsed_time = current_time - self.start_time
+        
+        metrics = {
+            'worker_id': self.worker_id,
+            'session_id': self.session_id,  # Add session ID to track restarts
+            'start_idx': self.start_idx,
+            'end_idx': self.end_idx,
+            'current_idx': self.start_idx + self.processed_count,
+            'processed_count': self.processed_count,
+            'failed_count': self.failed_count,
+            'elapsed_time': elapsed_time,
+            'images_per_second': self.processed_count / elapsed_time if elapsed_time > 0 else 0,
+            'last_update': current_time,
+            'timestamp': current_time,  # Add explicit timestamp for history tracking
+            'status': 'running'
+        }
+        
+        # Append to history
+        self.metrics_history.append(metrics.copy())
+        
+        # Write current metrics atomically using temporary file
+        temp_file = self.metrics_file.with_suffix('.tmp')
+        with open(temp_file, 'w') as f:
+            json.dump(metrics, f)
+        shutil.copy2(temp_file, self.metrics_file)
+        os.remove(temp_file)
+        
+        # Save history
+        self.save_metrics_history()
+        
+        self.last_update_time = current_time
+
+    async def run(self):
+        """
+        Run the batch processing pipeline with recovery support.
+        """
+        try:
+            # Initialize the model
+            if self.model is None:
+                await self.setup_model()
+
+            # Find existing progress and recover state
+            resume_idx, self.partition_counter = await self.find_existing_progress()
+            self.start_idx = max(self.start_idx, resume_idx + 1)
+
+            logging.info(
+                f'Starting processing from index {self.start_idx} (partition {self.partition_counter})'
+            )
+            
+            # Record start event in history
+            start_metrics = {
+                'worker_id': self.worker_id,
+                'session_id': self.session_id,
+                'event': 'start',
+                'start_idx': self.start_idx,
+                'end_idx': self.end_idx,
+                'timestamp': time.time(),
+                'status': 'starting'
+            }
+            self.metrics_history.append(start_metrics)
+            self.save_metrics_history()  # Explicitly save history for recovery
+            self.update_metrics()  # Also save current state
+
+            results = []
+
+            async for idx, input_data in self.do_data_loading():
+                self._current_batch.append((idx, input_data))
+                if len(self._current_batch) >= self.batch_size:
+                    batch_results = await self.do_batch_processing(
+                        self._current_batch)
+                    results.extend(batch_results)
+                    self._current_batch = []
+
+                    if len(results) >= self.checkpoint_size:
+                        self.save_results_to_parquet(results)
+                        results.clear()
+                        # Save metrics history at each checkpoint for recovery
+                        self.update_metrics()
+
+            # Process any remaining items in the batch
+            if self._current_batch:
+                batch_results = await self.do_batch_processing(self._current_batch)
+                results.extend(batch_results)
+
+            # Write the final partition if there are any leftover results
+            if results:
+                self.save_results_to_parquet(results)
+
+            # Write final metrics
+            self.update_metrics()
+            
+            # Update status to completed
+            completion_metrics = {
+                'worker_id': self.worker_id,
+                'session_id': self.session_id,
+                'event': 'completion',
+                'processed_count': self.processed_count,
+                'failed_count': self.failed_count,
+                'timestamp': time.time(),
+                'status': 'completed'
+            }
+            self.metrics_history.append(completion_metrics)
+            
+            # Update current status file
+            with open(self.metrics_file, 'r') as f:
+                metrics = json.loads(f.read())
+            metrics['status'] = 'completed'
+            
+            # Write atomically
+            temp_file = self.metrics_file.with_suffix('.tmp')
+            with open(temp_file, 'w') as f:
+                json.dump(metrics, f)
+            shutil.copy2(temp_file, self.metrics_file)
+            os.remove(temp_file)
+            
+            # Save final history
+            self.save_metrics_history()
+            
+        except Exception as e:
+            # Record error event
+            error_metrics = {
+                'worker_id': self.worker_id,
+                'session_id': self.session_id,
+                'event': 'error',
+                'error': str(e),
+                'timestamp': time.time(),
+                'status': 'failed'
+            }
+            self.metrics_history.append(error_metrics)
+            
+            # Update status to failed in current metrics
+            try:
+                with open(self.metrics_file, 'r') as f:
+                    metrics = json.loads(f.read())
+                metrics['status'] = 'failed'
+                metrics['error'] = str(e)
+                
+                # Write atomically
+                temp_file = self.metrics_file.with_suffix('.tmp')
+                with open(temp_file, 'w') as f:
+                    json.dump(metrics, f)
+                shutil.copy2(temp_file, self.metrics_file)
+                os.remove(temp_file)
+                
+                # Save history with error
+                self.save_metrics_history()
+            except Exception as nested_e:
+                logging.error(f"Failed to update error status: {nested_e}")
+            
+            raise
 
     def save_results_to_parquet(self, results: list):
         """Save results to a parquet file with atomic write."""
@@ -238,87 +460,6 @@ class BatchProcessor():
             f'Saved partition {self.partition_counter} to {final_path} with {len(df)} rows'
         )
         self.partition_counter += 1
-
-    def update_metrics(self):
-        """Update progress metrics file."""
-        current_time = time.time()
-        elapsed_time = current_time - self.start_time
-        
-        metrics = {
-            'worker_id': self.worker_id,
-            'start_idx': self.start_idx,
-            'end_idx': self.end_idx,
-            'current_idx': self.start_idx + self.processed_count,
-            'processed_count': self.processed_count,
-            'failed_count': self.failed_count,
-            'elapsed_time': elapsed_time,
-            'images_per_second': self.processed_count / elapsed_time if elapsed_time > 0 else 0,
-            'last_update': current_time,
-            'status': 'running'
-        }
-        
-        # Write atomically using temporary file
-        temp_file = self.metrics_file.with_suffix('.tmp')
-        with open(temp_file, 'w') as f:
-            json.dump(metrics, f)
-        temp_file.replace(self.metrics_file)
-        self.last_update_time = current_time
-
-    async def run(self):
-        """
-        Run the batch processing pipeline with recovery support.
-        """
-        try:
-            # Initialize the model
-            if self.model is None:
-                await self.setup_model()
-
-            # Find existing progress
-            resume_idx, self.partition_counter = await self.find_existing_progress()
-            self.start_idx = max(self.start_idx, resume_idx + 1)
-
-            logging.info(
-                f'Starting processing from index {self.start_idx} (partition {self.partition_counter})'
-            )
-
-            results = []
-
-            async for idx, input_data in self.do_data_loading():
-                self._current_batch.append((idx, input_data))
-                if len(self._current_batch) >= self.batch_size:
-                    batch_results = await self.do_batch_processing(
-                        self._current_batch)
-                    results.extend(batch_results)
-                    self._current_batch = []
-
-                    if len(results) >= self.checkpoint_size:
-                        self.save_results_to_parquet(results)
-                        results.clear()
-
-            # Process any remaining items in the batch
-            if self._current_batch:
-                batch_results = await self.do_batch_processing(self._current_batch)
-                results.extend(batch_results)
-
-            # Write the final partition if there are any leftover results
-            if results:
-                self.save_results_to_parquet(results)
-
-            # Write final metrics
-            self.update_metrics()
-            
-            # Update status to completed
-            metrics = json.loads(self.metrics_file.read_text())
-            metrics['status'] = 'completed'
-            self.metrics_file.write_text(json.dumps(metrics))
-            
-        except Exception as e:
-            # Update status to failed
-            metrics = json.loads(self.metrics_file.read_text())
-            metrics['status'] = 'failed'
-            metrics['error'] = str(e)
-            self.metrics_file.write_text(json.dumps(metrics))
-            raise
 
 
 async def main():
