@@ -119,6 +119,7 @@ class BatchProcessor():
                         return self.preprocess(img)
         except Exception as e:
             self.failed_count += 1
+            self.processed_count += 1  # Count failed items as processed
             logging.debug(f"Error preprocessing image from {url}: {str(e)}")
         return None
 
@@ -209,6 +210,7 @@ class BatchProcessor():
         self.metrics_history = self._load_metrics_history()
         
         # If we have existing history, extract the last known position
+        recovered_processed_count = 0
         if self.metrics_history:
             # Get the most recent session that was running before termination
             recent_metrics = sorted(
@@ -230,6 +232,9 @@ class BatchProcessor():
                 self.metrics_history.append(termination_metrics)
                 self.save_metrics_history()  # Save this termination event
                 logging.info(f"Detected spot VM termination for session {termination_metrics['session_id']}")
+                
+                # Recover the processed count from previous session
+                recovered_processed_count = recent_metrics[-1].get('processed_count', 0)
         
         # Find highest index from partition files
         max_idx = self.start_idx
@@ -257,7 +262,10 @@ class BatchProcessor():
                     recovered_idx = max(recovered_idx, metrics.get('current_idx', self.start_idx))
                     break
         
-        logging.info(f"Recovered progress from index {recovered_idx} (partition {max_partition + 1})")
+        # Set the initial processed count to continue from previous session
+        self.processed_count = recovered_processed_count
+        
+        logging.info(f"Recovered progress from index {recovered_idx} (partition {max_partition + 1}, processed count: {recovered_processed_count})")
         return recovered_idx, max_partition + 1
 
     def _load_metrics_history(self) -> List[Dict]:

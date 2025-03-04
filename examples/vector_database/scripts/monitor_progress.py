@@ -55,14 +55,19 @@ class MonitoringService:
         if worker_id in self.last_processed_count:
             time_diff = current_time - self.throughput_history[worker_id][-1]['timestamp']
             count_diff = current_count - self.last_processed_count[worker_id]
-            if time_diff > 0:  # Avoid division by zero
+            
+            # Only update if there's a meaningful time difference and count change
+            if time_diff > 0 and count_diff >= 0:  # Avoid division by zero and negative counts
                 throughput = count_diff / time_diff
                 
-                # Add new data point
+                # Add new data point, but as an average rate over the interval
+                # instead of an instantaneous point
                 self.throughput_history[worker_id].append({
                     'timestamp': current_time,
                     'throughput': throughput,
-                    'session_id': metrics.get('session_id', 'unknown')
+                    'session_id': metrics.get('session_id', 'unknown'),
+                    'interval': time_diff,
+                    'count_change': count_diff
                 })
                 
                 # Remove old data points outside the history window
@@ -76,7 +81,9 @@ class MonitoringService:
             self.throughput_history[worker_id].append({
                 'timestamp': current_time,
                 'throughput': metrics.get('images_per_second', 0),
-                'session_id': metrics.get('session_id', 'unknown')
+                'session_id': metrics.get('session_id', 'unknown'),
+                'interval': 0,
+                'count_change': 0
             })
             
         self.last_processed_count[worker_id] = current_count
@@ -217,15 +224,43 @@ class MonitoringService:
                 # Modify color brightness for different sessions of the same worker
                 session_color = self._adjust_color_brightness(color, j * 15)
                 
-                datasets.append({
-                    'label': f"{worker_id} (session {j+1})",
-                    'data': [{'x': point['timestamp'] * 1000, 'y': point['throughput']}  # Convert to milliseconds for JS
-                             for point in session_data],
-                    'borderColor': session_color,
-                    'backgroundColor': session_color + '20',
-                    'fill': False,
-                    'pointRadius': 3
-                })
+                # Generate data for stepped line chart showing average rates over intervals
+                chart_data = []
+                for k, point in enumerate(sorted(session_data, key=lambda p: p['timestamp'])):
+                    # For each point, we create two data points to create a stepped appearance:
+                    # 1. At the start of interval with the rate value
+                    # 2. At the end of interval with the same rate value (or next interval start)
+                    
+                    # Skip first point with no interval data
+                    if point.get('interval', 0) <= 0:
+                        continue
+                        
+                    # Get time at start of interval
+                    interval_start = point['timestamp'] - point.get('interval', 0)
+                    
+                    # Add the beginning of the interval
+                    chart_data.append({
+                        'x': interval_start * 1000,  # Convert to milliseconds for JS
+                        'y': point['throughput']
+                    })
+                    
+                    # Add the end of the interval
+                    chart_data.append({
+                        'x': point['timestamp'] * 1000,  # Convert to milliseconds for JS
+                        'y': point['throughput']
+                    })
+                
+                # Only add this dataset if it has data points
+                if chart_data:
+                    datasets.append({
+                        'label': f"{worker_id} (session {j+1})",
+                        'data': chart_data,
+                        'borderColor': session_color,
+                        'backgroundColor': session_color + '20',
+                        'fill': False,
+                        'stepped': 'before',  # Use stepped line to show constant rate over interval
+                        'pointRadius': 0      # Hide individual points for cleaner stepped display
+                    })
         
         return {
             'datasets': datasets
@@ -305,7 +340,7 @@ class MonitoringService:
 
     def get_dashboard_html(self) -> str:
         """Generate HTML dashboard."""
-        refresh_rate = 5  # seconds
+        refresh_rate = 30  # seconds
         
         # Convert metrics to human-readable format
         metrics = self.aggregate_metrics.copy()
@@ -389,19 +424,6 @@ class MonitoringService:
 
         # Get chart data
         chart_data = json.dumps(self.get_throughput_chart_data())
-        
-        # Get termination events for chart annotations
-        termination_events = []
-        for worker_id, history in self.worker_history.items():
-            for event in history:
-                if event.get('event') == 'termination' or event.get('status') == 'terminated':
-                    termination_events.append({
-                        'worker_id': worker_id,
-                        'session_id': event.get('session_id', 'unknown'),
-                        'timestamp': event.get('timestamp', 0) * 1000  # Convert to milliseconds for JS
-                    })
-        
-        termination_events_json = json.dumps(termination_events)
 
         return f"""
         <!DOCTYPE html>
@@ -469,24 +491,6 @@ class MonitoringService:
                 .tab-content.active {{
                     display: block;
                 }}
-                .event-marker {{
-                    position: absolute;
-                    width: 2px;
-                    background-color: red;
-                    opacity: 0.7;
-                }}
-                .event-marker::after {{
-                    content: "VM terminated";
-                    position: absolute;
-                    top: 0;
-                    left: 5px;
-                    background: rgba(255,0,0,0.8);
-                    color: white;
-                    padding: 2px 5px;
-                    border-radius: 3px;
-                    font-size: 10px;
-                    white-space: nowrap;
-                }}
             </style>
         </head>
         <body>
@@ -522,7 +526,6 @@ class MonitoringService:
             <h2>Throughput History</h2>
             <div class="chart-container">
                 <canvas id="throughputChart"></canvas>
-                <div id="terminationMarkers"></div>
             </div>
             
             <div class="tabs">
@@ -576,7 +579,6 @@ class MonitoringService:
                 // Chart setup
                 const ctx = document.getElementById('throughputChart');
                 const chartData = {chart_data};
-                const terminationEvents = {termination_events_json};
                 
                 const chart = new Chart(ctx, {{
                     type: 'line',
@@ -613,55 +615,10 @@ class MonitoringService:
                                         return `${{context.dataset.label}}: ${{context.parsed.y.toFixed(2)}} img/s`;
                                     }}
                                 }}
-                            }},
-                            annotation: {{
-                                annotations: terminationEvents.map(event => ({{
-                                    type: 'line',
-                                    xMin: event.timestamp,
-                                    xMax: event.timestamp,
-                                    borderColor: 'red',
-                                    borderWidth: 2,
-                                    label: {{
-                                        display: true,
-                                        content: 'VM terminated',
-                                        position: 'top'
-                                    }}
-                                }}))
                             }}
                         }}
                     }}
                 }});
-                
-                // Add visual markers for termination events
-                function addTerminationMarkers() {{
-                    const container = document.getElementById('terminationMarkers');
-                    container.innerHTML = '';
-                    
-                    // Wait for chart to render
-                    setTimeout(() => {{
-                        const chartRect = ctx.getBoundingClientRect();
-                        
-                        terminationEvents.forEach(event => {{
-                            // Convert timestamp to x position on chart
-                            const xScale = chart.scales.x;
-                            if (!xScale) return;
-                            
-                            const xPos = xScale.getPixelForValue(event.timestamp);
-                            if (isNaN(xPos)) return;
-                            
-                            const marker = document.createElement('div');
-                            marker.className = 'event-marker';
-                            marker.style.height = `${{chartRect.height}}px`;
-                            marker.style.left = `${{xPos}}px`;
-                            marker.title = `Worker ${{event.worker_id}} terminated at ${{new Date(event.timestamp).toLocaleString()}}`;
-                            
-                            container.appendChild(marker);
-                        }});
-                    }}, 500);
-                }}
-                
-                // Execute after chart is rendered
-                chart.options.animation.onComplete = addTerminationMarkers;
                 
                 function showTab(tabId) {{
                     // Hide all tab contents
