@@ -299,6 +299,7 @@ class BatchProcessor():
         current_time = time.time()
         elapsed_time = current_time - self.start_time
         
+        # Remove throughput calculations - these will be calculated by the monitor instead
         metrics = {
             'worker_id': self.worker_id,
             'session_id': self.session_id,  # Add session ID to track restarts
@@ -308,7 +309,6 @@ class BatchProcessor():
             'processed_count': self.processed_count,
             'failed_count': self.failed_count,
             'elapsed_time': elapsed_time,
-            'images_per_second': self.processed_count / elapsed_time if elapsed_time > 0 else 0,
             'last_update': current_time,
             'timestamp': current_time,  # Add explicit timestamp for history tracking
             'status': 'running'

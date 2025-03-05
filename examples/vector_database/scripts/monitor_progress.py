@@ -41,7 +41,8 @@ class MonitoringService:
             'completed_workers': 0,
             'failed_workers': 0,
             'overall_progress': 0.0,
-            'overall_speed': 0.0,
+            'overall_throughput': 0.0,
+            'recent_throughput': 0.0,
             'estimated_time_remaining': None,
             'total_restarts': 0
         }
@@ -51,21 +52,41 @@ class MonitoringService:
         current_time = time.time()
         current_count = metrics['processed_count']
         
-        # Calculate throughput since last update
+        # Store both the cumulative progress and throughput data
         if worker_id in self.last_processed_count:
             time_diff = current_time - self.throughput_history[worker_id][-1]['timestamp']
             count_diff = current_count - self.last_processed_count[worker_id]
             
             # Only update if there's a meaningful time difference and count change
             if time_diff > 0 and count_diff >= 0:  # Avoid division by zero and negative counts
+                # Calculate throughput from raw metrics data
                 throughput = count_diff / time_diff
                 
-                # Add new data point, but as an average rate over the interval
-                # instead of an instantaneous point
+                # Calculate overall throughput since the start of this session
+                session_id = metrics.get('session_id', 'unknown')
+                session_start_time = None
+                session_start_count = 0
+                
+                # Find the start of this session
+                for point in self.throughput_history[worker_id]:
+                    if point.get('session_id') == session_id:
+                        if session_start_time is None or point['timestamp'] < session_start_time:
+                            session_start_time = point['timestamp']
+                            session_start_count = point.get('cumulative_count', 0)
+                
+                overall_throughput = 0
+                if session_start_time is not None and current_time > session_start_time:
+                    overall_time = current_time - session_start_time
+                    overall_count = current_count - session_start_count
+                    overall_throughput = overall_count / overall_time if overall_time > 0 else 0
+                
+                # Add new data point with cumulative count and calculated throughputs
                 self.throughput_history[worker_id].append({
                     'timestamp': current_time,
-                    'throughput': throughput,
-                    'session_id': metrics.get('session_id', 'unknown'),
+                    'recent_throughput': throughput,
+                    'overall_throughput': overall_throughput,
+                    'cumulative_count': current_count,
+                    'session_id': session_id,
                     'interval': time_diff,
                     'count_change': count_diff
                 })
@@ -77,15 +98,17 @@ class MonitoringService:
                     if point['timestamp'] > cutoff_time
                 ]
         else:
-            # First data point for this worker
+            # First data point for this worker - can't calculate throughput yet
             self.throughput_history[worker_id].append({
                 'timestamp': current_time,
-                'throughput': metrics.get('images_per_second', 0),
+                'recent_throughput': 0,
+                'overall_throughput': 0,
+                'cumulative_count': current_count,
                 'session_id': metrics.get('session_id', 'unknown'),
                 'interval': 0,
                 'count_change': 0
             })
-            
+        
         self.last_processed_count[worker_id] = current_count
 
     async def read_worker_history(self, worker_id: str):
@@ -151,20 +174,24 @@ class MonitoringService:
             # Calculate aggregate metrics
             total_processed = 0
             total_failed = 0
-            total_speed = 0
             active_workers = 0
             completed_workers = 0
             failed_workers = 0
             total_progress = 0
             total_items = 0
+            
+            # Calculate throughput metrics by aggregating from throughput history
+            total_recent_throughput = 0
+            total_overall_throughput = 0
+            active_worker_count = 0
 
-            for metrics in self.worker_metrics.values():
+            for worker_id, metrics in self.worker_metrics.items():
                 total_processed += metrics['processed_count']
                 total_failed += metrics.get('failed_count', 0)
-                total_speed += metrics.get('images_per_second', 0)
                 
                 if metrics.get('status') == 'running':
                     active_workers += 1
+                    active_worker_count += 1
                 elif metrics.get('status') == 'completed':
                     completed_workers += 1
                 elif metrics.get('status') == 'failed':
@@ -173,6 +200,12 @@ class MonitoringService:
                 if metrics.get('end_idx'):
                     total_items += metrics['end_idx'] - metrics['start_idx']
                     total_progress += metrics['processed_count']
+                    
+                # Get the most recent throughput data for this worker
+                if worker_id in self.throughput_history and self.throughput_history[worker_id]:
+                    latest = sorted(self.throughput_history[worker_id], key=lambda x: x['timestamp'])[-1]
+                    total_recent_throughput += latest.get('recent_throughput', 0)
+                    total_overall_throughput += latest.get('overall_throughput', 0)
 
             # Update aggregate metrics
             self.aggregate_metrics.update({
@@ -183,8 +216,9 @@ class MonitoringService:
                 'completed_workers': completed_workers,
                 'failed_workers': failed_workers,
                 'overall_progress': (total_progress / total_items * 100) if total_items > 0 else 0,
-                'overall_speed': total_speed,
-                'estimated_time_remaining': (total_items - total_progress) / total_speed if total_speed > 0 else None,
+                'overall_throughput': total_overall_throughput,
+                'recent_throughput': total_recent_throughput,
+                'estimated_time_remaining': (total_items - total_progress) / total_overall_throughput if total_overall_throughput > 0 else None,
                 'total_restarts': total_restarts
             })
 
@@ -192,7 +226,7 @@ class MonitoringService:
             print(f"Error updating metrics: {e}")
 
     def get_throughput_chart_data(self) -> Dict:
-        """Prepare throughput history data for Chart.js."""
+        """Prepare cumulative progress data for Chart.js."""
         # Get the earliest and latest timestamps across all workers
         all_timestamps = []
         for history in self.throughput_history.values():
@@ -204,8 +238,8 @@ class MonitoringService:
         min_time = min(all_timestamps)
         max_time = max(all_timestamps)
         
-        # Generate dataset for each worker
-        datasets = []
+        # Generate datasets for cumulative progress chart
+        cum_datasets = []
         colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
         
         for i, (worker_id, history) in enumerate(self.throughput_history.items()):
@@ -219,51 +253,32 @@ class MonitoringService:
                     sessions[session_id] = []
                 sessions[session_id].append(point)
             
-            # Create a separate dataset for each session
+            # Create a separate dataset for each session for cumulative progress
             for j, (session_id, session_data) in enumerate(sessions.items()):
                 # Modify color brightness for different sessions of the same worker
                 session_color = self._adjust_color_brightness(color, j * 15)
                 
-                # Generate data for stepped line chart showing average rates over intervals
-                chart_data = []
-                for k, point in enumerate(sorted(session_data, key=lambda p: p['timestamp'])):
-                    # For each point, we create two data points to create a stepped appearance:
-                    # 1. At the start of interval with the rate value
-                    # 2. At the end of interval with the same rate value (or next interval start)
-                    
-                    # Skip first point with no interval data
-                    if point.get('interval', 0) <= 0:
-                        continue
-                        
-                    # Get time at start of interval
-                    interval_start = point['timestamp'] - point.get('interval', 0)
-                    
-                    # Add the beginning of the interval
-                    chart_data.append({
-                        'x': interval_start * 1000,  # Convert to milliseconds for JS
-                        'y': point['throughput']
-                    })
-                    
-                    # Add the end of the interval
-                    chart_data.append({
+                # Generate data for cumulative progress chart
+                cum_data = []
+                for point in sorted(session_data, key=lambda p: p['timestamp']):
+                    cum_data.append({
                         'x': point['timestamp'] * 1000,  # Convert to milliseconds for JS
-                        'y': point['throughput']
+                        'y': point.get('cumulative_count', 0)
                     })
                 
                 # Only add this dataset if it has data points
-                if chart_data:
-                    datasets.append({
+                if cum_data:
+                    cum_datasets.append({
                         'label': f"{worker_id} (session {j+1})",
-                        'data': chart_data,
+                        'data': cum_data,
                         'borderColor': session_color,
                         'backgroundColor': session_color + '20',
                         'fill': False,
-                        'stepped': 'before',  # Use stepped line to show constant rate over interval
-                        'pointRadius': 0      # Hide individual points for cleaner stepped display
+                        'tension': 0.1
                     })
         
         return {
-            'datasets': datasets
+            'datasets': cum_datasets
         }
     
     def _adjust_color_brightness(self, hex_color, percent):
@@ -340,12 +355,13 @@ class MonitoringService:
 
     def get_dashboard_html(self) -> str:
         """Generate HTML dashboard."""
-        refresh_rate = 30  # seconds
+        refresh_rate = 5  # seconds
         
         # Convert metrics to human-readable format
         metrics = self.aggregate_metrics.copy()
         metrics['overall_progress'] = f"{metrics['overall_progress']:.2f}%"
-        metrics['overall_speed'] = f"{metrics['overall_speed']:.2f} images/sec"
+        metrics['overall_throughput'] = f"{metrics['overall_throughput']:.2f} img/s"
+        metrics['recent_throughput'] = f"{metrics['recent_throughput']:.2f} img/s"
         if metrics['estimated_time_remaining']:
             hours = metrics['estimated_time_remaining'] / 3600
             metrics['estimated_time_remaining'] = f"{hours:.1f} hours"
@@ -430,7 +446,7 @@ class MonitoringService:
         <html>
         <head>
             <title>CLIP Vector Computation Progress</title>
-            <meta http-equiv="refresh" content="{refresh_rate}">
+            <meta id="refresh-meta" http-equiv="refresh" content="{refresh_rate}">
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1"></script>
             <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
@@ -491,10 +507,39 @@ class MonitoringService:
                 .tab-content.active {{
                     display: block;
                 }}
+                .toggle-refresh {{
+                    margin-top: 10px;
+                    padding: 8px 15px;
+                    background-color: #4CAF50;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                }}
+                .toggle-refresh.paused {{
+                    background-color: #f44336;
+                }}
+                .header-controls {{
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }}
+                .refresh-status {{
+                    margin-left: 10px;
+                    font-size: 14px;
+                    color: #666;
+                }}
             </style>
         </head>
         <body>
-            <h1>CLIP Vector Computation Progress</h1>
+            <div class="header-controls">
+                <h1>CLIP Vector Computation Progress</h1>
+                <div>
+                    <button id="toggle-refresh" class="toggle-refresh">Pause Auto-Refresh</button>
+                    <span id="refresh-status" class="refresh-status">Auto-refreshing every {refresh_rate}s</span>
+                </div>
+            </div>
             
             <div class="metrics-grid">
                 <div class="metric-card">
@@ -502,8 +547,12 @@ class MonitoringService:
                     <div class="metric-value">{metrics['overall_progress']}</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Processing Speed</div>
-                    <div class="metric-value">{metrics['overall_speed']}</div>
+                    <div class="metric-label">Overall Speed</div>
+                    <div class="metric-value">{metrics['overall_throughput']}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Recent Speed</div>
+                    <div class="metric-value">{metrics['recent_throughput']}</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Estimated Time Remaining</div>
@@ -523,7 +572,7 @@ class MonitoringService:
                 </div>
             </div>
 
-            <h2>Throughput History</h2>
+            <h2>Cumulative Progress</h2>
             <div class="chart-container">
                 <canvas id="throughputChart"></canvas>
             </div>
@@ -600,19 +649,19 @@ class MonitoringService:
                             y: {{
                                 title: {{
                                     display: true,
-                                    text: 'Images/second'
+                                    text: 'Cumulative Images Processed'
                                 }}
                             }}
                         }},
                         plugins: {{
                             title: {{
                                 display: true,
-                                text: 'Worker Throughput Over Time (Gaps indicate VM restarts)'
+                                text: 'Cumulative Progress Over Time'
                             }},
                             tooltip: {{
                                 callbacks: {{
                                     label: function(context) {{
-                                        return `${{context.dataset.label}}: ${{context.parsed.y.toFixed(2)}} img/s`;
+                                        return `${{context.dataset.label}}: ${{context.parsed.y.toFixed(0)}} images`;
                                     }}
                                 }}
                             }}
@@ -620,6 +669,7 @@ class MonitoringService:
                     }}
                 }});
                 
+                // Tab switching function
                 function showTab(tabId) {{
                     // Hide all tab contents
                     document.querySelectorAll('.tab-content').forEach(content => {{
@@ -637,6 +687,44 @@ class MonitoringService:
                     // Activate the clicked tab
                     event.currentTarget.classList.add('active');
                 }}
+                
+                // Auto-refresh toggle
+                let autoRefreshEnabled = true;
+                const toggleButton = document.getElementById('toggle-refresh');
+                const refreshStatus = document.getElementById('refresh-status');
+                const refreshMeta = document.getElementById('refresh-meta');
+                
+                toggleButton.addEventListener('click', function() {{
+                    autoRefreshEnabled = !autoRefreshEnabled;
+                    
+                    if (autoRefreshEnabled) {{
+                        // Enable auto-refresh
+                        refreshMeta.setAttribute('content', '{refresh_rate}');
+                        toggleButton.textContent = 'Pause Auto-Refresh';
+                        toggleButton.classList.remove('paused');
+                        refreshStatus.textContent = 'Auto-refreshing every {refresh_rate}s';
+                    }} else {{
+                        // Disable auto-refresh
+                        refreshMeta.setAttribute('content', '');
+                        toggleButton.textContent = 'Resume Auto-Refresh';
+                        toggleButton.classList.add('paused');
+                        refreshStatus.textContent = 'Auto-refresh paused';
+                    }}
+                }});
+                
+                // Manual refresh button
+                document.addEventListener('keydown', function(event) {{
+                    // If F5 or Ctrl+R is pressed and auto-refresh is disabled, don't prevent refresh
+                    if (!autoRefreshEnabled) {{
+                        return;
+                    }}
+                    
+                    // Prevent F5 or Ctrl+R from refreshing when auto-refresh is enabled
+                    if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {{
+                        event.preventDefault();
+                        alert('Auto-refresh is enabled. To manually refresh, first click "Pause Auto-Refresh".');
+                    }}
+                }});
             </script>
         </body>
         </html>
@@ -649,6 +737,9 @@ async def startup_event():
     global monitoring_service
     metrics_dir = "/output/metrics"  # This should match the directory in compute_vectors.py
     monitoring_service = MonitoringService(metrics_dir)
+    
+    # Load initial data immediately
+    await monitoring_service.update_metrics()
     
     # Start background task to update metrics
     asyncio.create_task(periodic_metrics_update())
@@ -677,5 +768,4 @@ def main():
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 if __name__ == "__main__":
-    main() 
     main() 
