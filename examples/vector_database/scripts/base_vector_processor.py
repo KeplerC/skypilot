@@ -10,6 +10,7 @@ from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import torch
+import json
 
 class BaseVectorProcessor(ABC):
     """Base class for processing data and computing vector embeddings.
@@ -152,7 +153,7 @@ class BaseVectorProcessor(ABC):
         """Save metrics history to file."""
         try:
             with open(self.metrics_history_file, 'w') as f:
-                f.write(str(self.metrics_history))
+                json.dump(self.metrics_history, f)
         except Exception as e:
             logging.warning(f"Failed to save metrics history: {e}")
 
