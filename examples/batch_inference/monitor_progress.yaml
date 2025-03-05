@@ -1,0 +1,24 @@
+name: clip-monitor-progress
+
+workdir: .
+
+resources:
+  cpus: 2
+  memory: 8+
+  cloud: aws
+  ports:
+    - 8000
+
+file_mounts:
+  /output:
+    name: sky-demo-embeddings-2
+    # this needs to be the same as the source in compute_vectors.yaml
+    mode: MOUNT
+    store: s3
+
+
+setup: |
+  pip install fastapi uvicorn aiofiles
+
+run: |
+  python scripts/monitor_progress.py 
