@@ -1,0 +1,49 @@
+name: compute-image-vectors
+
+workdir: .
+
+resources:
+  accelerators: 
+    L4: 1
+  memory: 32+
+  any_of:
+    - use_spot: true
+    - use_spot: false
+  
+envs:
+  START_IDX: 0  # Will be overridden by batch launcher script
+  END_IDX: 10000  # Will be overridden by batch launcher script
+  MODEL_NAME: "ViT-bigG-14"
+  PRETRAINED: "laion2b_s39b_b160k"
+  DATASET_NAME: "laion/relaion2B-en-research-safe"
+  EMBEDDINGS_BUCKET_NAME: sky-image-embeddings  # Bucket name for storing embeddings
+  HF_TOKEN: ''
+  WORKER_ID: ''
+  
+file_mounts:
+  /output:
+    name: ${EMBEDDINGS_BUCKET_NAME}
+    mode: MOUNT
+
+setup: |
+  # Install dependencies for CLIP
+  pip install torch torchvision open_clip_torch
+  
+  # Install dependencies for image processing
+  pip install numpy pandas requests tqdm datasets
+  pip install Pillow aiohttp
+  pip install pyarrow
+
+run: |
+  # Process the assigned range of images
+  echo "Processing images from $START_IDX to $END_IDX"
+  
+  python scripts/image_vector_processor.py \
+    --output-path "/output/embeddings_${START_IDX}_${END_IDX}.parquet" \
+    --start-idx $START_IDX \
+    --end-idx $END_IDX \
+    --batch-size 32 \
+    --checkpoint-size 100 \
+    --model-name $MODEL_NAME \
+    --pretrained $PRETRAINED \
+    --dataset-name $DATASET_NAME 

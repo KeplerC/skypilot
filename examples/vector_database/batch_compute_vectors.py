@@ -108,7 +108,7 @@ def main():
         time.sleep(10)
 
     # Load the worker task template
-    task = sky.Task.from_yaml('compute_vectors.yaml')
+    task = sky.Task.from_yaml('compute_image_vectors.yaml')
 
     # Launch jobs for each partition
     for job_rank in range(args.num_jobs):
