@@ -33,7 +33,7 @@ class TextVectorProcessor(BaseVectorProcessor):
                  model_name: str = "Alibaba-NLP/gte-Qwen2-7B-instruct",
                  dataset_name: str = 'pile-of-law/pile-of-law',
                  dataset_config: str = 'all',
-                 split: str = 'train',
+                 split: str = 'full',
                  streaming: bool = True,
                  batch_size: int = 32,
                  checkpoint_size: int = 100,

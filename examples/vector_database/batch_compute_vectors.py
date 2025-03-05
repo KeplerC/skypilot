@@ -12,7 +12,7 @@ This script is responsible for:
 import argparse
 import os
 import time
-
+import uuid
 import sky
 
 
@@ -51,11 +51,11 @@ def main():
                         help='Global start index in dataset')
     parser.add_argument('--end-idx',
                         type=int,
-                        default=10000000,
+                        default=29475453, # text
                         help='Global end index in dataset, not inclusive')
     parser.add_argument('--num-jobs',
                         type=int,
-                        default=3,
+                        default=5,
                         help='Number of jobs to partition the work across')
     parser.add_argument('--env-path',
                         type=str,
@@ -84,6 +84,11 @@ def main():
     if not hf_token:
         raise ValueError("HF_TOKEN not found in ~/.env or environment variable")
 
+
+    # make sure every run use different bucket name
+    args.bucket_name = f"{args.bucket_name}-{str(uuid.uuid4())[:4]}"
+    # eric: todo; this doesn't work
+
     # Launch monitoring service first (unless skipped)
     print("Launching monitoring service cluster...")
     monitor_task = sky.Task.from_yaml('monitor_progress.yaml')
@@ -93,7 +98,7 @@ def main():
     monitor_job = sky.launch(monitor_task)
 
     # Load the worker task template
-    task = sky.Task.from_yaml('compute_image_vectors.yaml')
+    task = sky.Task.from_yaml('compute_text_vectors.yaml')
 
     # Launch jobs for each partition
     for job_rank in range(args.num_jobs):
