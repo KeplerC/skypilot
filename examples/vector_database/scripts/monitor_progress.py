@@ -59,6 +59,9 @@ class MonitoringService:
         current_time = time.time()
         current_count = metrics['processed_count']
         
+        # Get the session ID from metrics, defaulting to a generated one if not present
+        session_id = metrics.get('session_id', f"unknown_{worker_id}_{int(current_time)}")
+        
         # Store both the cumulative progress and throughput data
         if worker_id in self.last_processed_count:
             time_diff = current_time - self.throughput_history[worker_id][-1]['timestamp']
@@ -70,13 +73,12 @@ class MonitoringService:
                 throughput = count_diff / time_diff
                 
                 # Calculate overall throughput since the start of this session
-                session_id = metrics.get('session_id', 'unknown')
                 session_start_time = None
                 session_start_count = 0
                 
                 # Find the start of this session
                 for point in self.throughput_history[worker_id]:
-                    if point.get('session_id') == session_id:
+                    if point.get('session_id', 'unknown') == session_id:
                         if session_start_time is None or point['timestamp'] < session_start_time:
                             session_start_time = point['timestamp']
                             session_start_count = point.get('cumulative_count', 0)
@@ -111,7 +113,7 @@ class MonitoringService:
                 'recent_throughput': 0,
                 'overall_throughput': 0,
                 'cumulative_count': current_count,
-                'session_id': metrics.get('session_id', 'unknown'),
+                'session_id': session_id,
                 'interval': 0,
                 'count_change': 0
             })
@@ -132,11 +134,12 @@ class MonitoringService:
                     
                     # Calculate overall token throughput since the start of this session
                     session_token_start = 0
+                    session_start_time = None
                     
                     # Find the start of this session for tokens
                     if worker_id in self.token_throughput_history and self.token_throughput_history[worker_id]:
                         for point in self.token_throughput_history[worker_id]:
-                            if point.get('session_id') == session_id:
+                            if point.get('session_id', 'unknown') == session_id:
                                 if session_start_time is None or point['timestamp'] < session_start_time:
                                     session_start_time = point['timestamp']
                                     session_token_start = point.get('cumulative_tokens', 0)
@@ -192,8 +195,18 @@ class MonitoringService:
                     # Extract unique session IDs
                     sessions = set()
                     for entry in history:
+                        # Skip entries without a session_id
                         if 'session_id' in entry:
                             sessions.add(entry['session_id'])
+                        elif 'timestamp' in entry:
+                            # If session_id is missing but there's a timestamp, create a synthetic session ID
+                            synthetic_session_id = f"unknown_{worker_id}_{int(entry['timestamp'])//3600}"
+                            entry['session_id'] = synthetic_session_id  # Add it to the entry
+                            sessions.add(synthetic_session_id)
+                        else:
+                            # If both are missing, use a generic unknown ID
+                            entry['session_id'] = f"unknown_{worker_id}"
+                            sessions.add(f"unknown_{worker_id}")
                     
                     self.worker_sessions[worker_id] = sorted(list(sessions))
                     
@@ -221,6 +234,13 @@ class MonitoringService:
                         content = await f.read()
                         metrics = json.loads(content)
                         worker_id = metrics['worker_id']
+                        
+                        # Ensure session_id exists, generate one if missing
+                        if 'session_id' not in metrics and 'timestamp' in metrics:
+                            metrics['session_id'] = f"unknown_{worker_id}_{int(metrics['timestamp'])//3600}"
+                        elif 'session_id' not in metrics:
+                            metrics['session_id'] = f"unknown_{worker_id}"
+                            
                         new_metrics[worker_id] = metrics
                         
                         # Read worker history
@@ -305,59 +325,153 @@ class MonitoringService:
             print(f"Error updating metrics: {e}")
 
     def get_throughput_chart_data(self) -> Dict:
-        """Prepare cumulative progress data for Chart.js."""
-        # Get the earliest and latest timestamps across all workers
-        all_timestamps = []
-        for history in self.throughput_history.values():
-            all_timestamps.extend(point['timestamp'] for point in history)
+        """Prepare cumulative progress data for Chart.js from the worker history files."""
+        # We're going to use the worker history data, which already contains the full history
+        # of each worker's progress over time, including restarts.
         
-        if not all_timestamps:
-            return {'labels': [], 'datasets': []}
+        # First, make sure all worker histories are loaded
+        all_histories = []
+        for worker_id in self.worker_metrics.keys():
+            if worker_id not in self.worker_history or not self.worker_history[worker_id]:
+                continue  # Skip workers with no history
             
-        min_time = min(all_timestamps)
-        max_time = max(all_timestamps)
+            all_histories.extend([(worker_id, entry) for entry in self.worker_history[worker_id]])
         
-        # Generate datasets for cumulative progress chart
-        cum_datasets = []
+        # If we have no history data, return an empty dataset
+        if not all_histories:
+            now = int(time.time())
+            empty_dataset = {
+                'label': 'No Progress Data',
+                'data': [
+                    {'x': (now - 3600) * 1000, 'y': 0},
+                    {'x': now * 1000, 'y': 0}
+                ],
+                'borderColor': '#cccccc',
+                'backgroundColor': '#cccccc20',
+                'borderWidth': 2,
+                'fill': 'false'
+            }
+            return {'datasets': [empty_dataset]}
+        
+        # Sort all history entries by timestamp
+        all_histories.sort(key=lambda x: x[1].get('timestamp', 0))
+        
+        # The master dataset shows the overall progress across all workers
+        master_dataset = {
+            'label': 'Total Progress',
+            'data': [],
+            'borderColor': '#000000',
+            'backgroundColor': '#00000020',
+            'borderWidth': 3,
+            'fill': 'false',
+            'tension': 0.1,
+            'pointRadius': 0
+        }
+        
+        # Start with 0 at the earliest timestamp
+        first_timestamp = all_histories[0][1].get('timestamp', 0)
+        master_dataset['data'].append({
+            'x': first_timestamp * 1000,  # Convert to milliseconds for Chart.js
+            'y': 0
+        })
+        
+        # Track the last known processed count for each worker/session
+        latest_processed = {}
+        
+        # Process all history events in chronological order
+        for worker_id, entry in all_histories:
+            timestamp = entry.get('timestamp', 0)
+            session_id = entry.get('session_id', 'unknown')
+            key = f"{worker_id}_{session_id}"
+            
+            # Update the processed count for this worker session
+            if 'processed_count' in entry:
+                latest_processed[key] = entry['processed_count']
+            
+            # Calculate the total processed count across all worker sessions
+            total_processed = sum(latest_processed.values())
+            
+            # Add a data point to the master dataset
+            master_dataset['data'].append({
+                'x': timestamp * 1000,  # Convert to milliseconds for Chart.js
+                'y': total_processed
+            })
+        
+        # Create individual datasets for each worker to show their contribution
+        worker_datasets = []
         colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
         
-        for i, (worker_id, history) in enumerate(self.throughput_history.items()):
-            color = colors[i % len(colors)]
-            
-            # Group by session ID
+        # Group history by worker and session
+        worker_sessions = {}
+        for worker_id, entries in self.worker_history.items():
+            # Group entries by session
             sessions = {}
-            for point in history:
-                session_id = point.get('session_id', 'unknown')
+            for entry in entries:
+                session_id = entry.get('session_id', 'unknown')
                 if session_id not in sessions:
                     sessions[session_id] = []
-                sessions[session_id].append(point)
+                sessions[session_id].append(entry)
             
-            # Create a separate dataset for each session for cumulative progress
-            for j, (session_id, session_data) in enumerate(sessions.items()):
-                # Modify color brightness for different sessions of the same worker
-                session_color = self._adjust_color_brightness(color, j * 15)
-                
-                # Generate data for cumulative progress chart
-                cum_data = []
-                for point in sorted(session_data, key=lambda p: p['timestamp']):
-                    cum_data.append({
-                        'x': point['timestamp'] * 1000,  # Convert to milliseconds for JS
-                        'y': point.get('cumulative_count', 0)
-                    })
-                
-                # Only add this dataset if it has data points
-                if cum_data:
-                    cum_datasets.append({
-                        'label': f"{worker_id} (session {j+1})",
-                        'data': cum_data,
-                        'borderColor': session_color,
-                        'backgroundColor': session_color + '20',
-                        'fill': 'false',
-                        'tension': 0.1
-                    })
+            # Process each session separately
+            for session_id, session_entries in sessions.items():
+                key = f"{worker_id}_{session_id}"
+                worker_sessions[key] = {
+                    'worker_id': worker_id,
+                    'session_id': session_id,
+                    'entries': sorted(session_entries, key=lambda e: e.get('timestamp', 0))
+                }
         
+        # Create a dataset for each worker session
+        for i, (key, session) in enumerate(worker_sessions.items()):
+            worker_id = session['worker_id']
+            session_id = session['session_id']
+            entries = session['entries']
+            
+            if not entries:
+                continue  # Skip empty sessions
+            
+            # Assign a color
+            color_idx = sum(ord(c) for c in worker_id) % len(colors)  # Deterministic color based on worker ID
+            color = colors[color_idx]
+            
+            # Adjust brightness for different sessions of the same worker
+            session_num = sum(1 for k in worker_sessions.keys() if k.startswith(f"{worker_id}_"))
+            session_idx = sum(1 for k in worker_sessions.keys() if k.startswith(f"{worker_id}_") and k <= key)
+            brightness_adjust = (session_idx - 1) * (100 // max(1, session_num))
+            session_color = self._adjust_color_brightness(color, brightness_adjust)
+            
+            # Create the dataset for this worker session
+            worker_dataset = {
+                'label': f"{worker_id} (session {session_id[:8]})",
+                'data': [],
+                'borderColor': session_color,
+                'backgroundColor': session_color + '20',
+                'borderWidth': 1,
+                'fill': 'false',
+                'tension': 0.1,
+                'pointRadius': 1
+            }
+            
+            # Start with 0 at the session's first timestamp
+            first_entry_time = entries[0].get('timestamp', 0)
+            worker_dataset['data'].append({
+                'x': first_entry_time * 1000,
+                'y': 0
+            })
+            
+            # Add each progress data point
+            for entry in entries:
+                if 'processed_count' in entry:
+                    worker_dataset['data'].append({
+                        'x': entry.get('timestamp', 0) * 1000,
+                        'y': entry['processed_count']
+                    })
+            
+            worker_datasets.append(worker_dataset)
+        
+        # Return all datasets, with the master dataset first
         return {
-            'datasets': cum_datasets
+            'datasets': [master_dataset] + worker_datasets
         }
     
     def _adjust_color_brightness(self, hex_color, percent):
@@ -440,65 +554,195 @@ class MonitoringService:
             all_timestamps.extend(point['timestamp'] for point in history)
         
         if not all_timestamps:
-            return {'labels': [], 'datasets': []}
-            
+            # Create empty datasets with placeholder data
+            now = int(time.time())
+            empty_bar_dataset = {
+                'label': 'No Token Throughput Data',
+                'type': 'bar',
+                'data': [
+                    {'x': (now - 3600) * 1000, 'y': 0},
+                    {'x': now * 1000, 'y': 0}
+                ],
+                'backgroundColor': '#cccccc80',
+                'borderColor': '#cccccc',
+                'borderWidth': 1
+            }
+            return {'datasets': [empty_bar_dataset]}
+        
         min_time = min(all_timestamps)
         max_time = max(all_timestamps)
         
         # Generate datasets for token throughput chart
         token_datasets = []
+        
+        # Add a total token throughput dataset that aggregates all workers
+        total_token_dataset = {
+            'label': 'Total Token Throughput',
+            'type': 'bar',  # Use bar chart for histogram-like display
+            'data': [],
+            'backgroundColor': '#36A2EB80',
+            'borderColor': '#36A2EB',
+            'borderWidth': 1,
+            'barPercentage': 0.8,
+            'categoryPercentage': 0.9,
+            'order': 1  # Lower order means it's drawn first (behind other datasets)
+        }
+        
+        # Add a line dataset to show the trend
+        total_token_trend_dataset = {
+            'label': 'Throughput Trend',
+            'type': 'line',
+            'data': [],
+            'borderColor': '#FF6384',
+            'backgroundColor': '#FF638420',
+            'borderWidth': 2,
+            'pointRadius': 0,
+            'fill': 'false',
+            'tension': 0.4,
+            'order': 0  # Higher priority, drawn on top
+        }
+        
         colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
         
-        for i, (worker_id, history) in enumerate(self.token_throughput_history.items()):
-            color = colors[i % len(colors)]
-            
-            # Group by session ID
-            sessions = {}
+        # First collect all data points from all workers - gather both recent and overall throughput
+        all_token_points = []
+        for worker_id, history in self.token_throughput_history.items():
             for point in history:
-                session_id = point.get('session_id', 'unknown')
-                if session_id not in sessions:
-                    sessions[session_id] = []
-                sessions[session_id].append(point)
+                # Use recent_token_throughput if available, otherwise try overall_token_throughput
+                throughput = point.get('recent_token_throughput', 0)
+                if throughput == 0:
+                    throughput = point.get('overall_token_throughput', 0)
+                
+                all_token_points.append({
+                    'timestamp': point['timestamp'],
+                    'throughput': throughput,
+                    'worker_id': worker_id,
+                    'session_id': point.get('session_id', 'unknown')
+                })
+        
+        # Sort all points by timestamp
+        all_token_points.sort(key=lambda x: x['timestamp'])
+        
+        # If we have no data points at all, create a placeholder dataset
+        if not all_token_points:
+            # Create empty datasets with placeholder data
+            now = int(time.time())
+            empty_bar_dataset = {
+                'label': 'No Token Throughput Data',
+                'type': 'bar',
+                'data': [
+                    {'x': (now - 3600) * 1000, 'y': 0},
+                    {'x': now * 1000, 'y': 0}
+                ],
+                'backgroundColor': '#cccccc80',
+                'borderColor': '#cccccc',
+                'borderWidth': 1
+            }
+            return {'datasets': [empty_bar_dataset]}
+        
+        # Group data into time bins (e.g., 1-minute bins) for the histogram
+        bin_size = 60  # 1 minute bins
+        time_bins = {}
+        
+        for point in all_token_points:
+            # Create a bin key by rounding the timestamp to the nearest bin
+            bin_key = int(point['timestamp'] // bin_size * bin_size)
             
-            # Create separate datasets for each session
-            for session_id, session_points in sessions.items():
-                # Skip sessions with no data
-                if not session_points:
+            if bin_key not in time_bins:
+                time_bins[bin_key] = []
+            
+            # Only include non-zero values
+            if point['throughput'] > 0:
+                time_bins[bin_key].append(point['throughput'])
+        
+        # Calculate the average throughput for each time bin
+        for bin_timestamp, throughputs in sorted(time_bins.items()):
+            if throughputs:  # Only process if there are non-zero values
+                avg_throughput = sum(throughputs) / len(throughputs)
+                
+                # Add to the histogram dataset
+                total_token_dataset['data'].append({
+                    'x': bin_timestamp * 1000,  # Convert to milliseconds for Chart.js
+                    'y': avg_throughput
+                })
+                
+                # Also add to the trend line
+                total_token_trend_dataset['data'].append({
+                    'x': bin_timestamp * 1000,
+                    'y': avg_throughput
+                })
+        
+        # Ensure there's at least one data point for visualization
+        if not total_token_dataset['data']:
+            # Create a single data point at the current time with a value of 0
+            current_time = int(time.time()) * 1000
+            total_token_dataset['data'].append({'x': current_time, 'y': 0})
+            total_token_trend_dataset['data'].append({'x': current_time, 'y': 0})
+        
+        # Add individual worker datasets as lines if there aren't too many workers
+        if len(self.token_throughput_history) <= 5:  # Only show individual workers if there aren't too many
+            for i, (worker_id, history) in enumerate(self.token_throughput_history.items()):
+                # Skip empty history
+                if not history:
                     continue
                     
-                # Sort by timestamp
-                session_points.sort(key=lambda x: x['timestamp'])
+                color = colors[i % len(colors)]
                 
-                # Create dataset for this session
-                dataset = {
-                    'label': f"{worker_id} (session {session_id[:8]})",
-                    'data': [],
-                    'borderColor': self._adjust_color_brightness(color, 0),
-                    'backgroundColor': self._adjust_color_brightness(color, 80),
-                    'borderWidth': 2,
-                    'pointRadius': 1,
-                    'fill': 'false'
-                }
+                # Group by session ID
+                sessions = {}
+                for point in history:
+                    session_id = point.get('session_id', 'unknown')
+                    if session_id not in sessions:
+                        sessions[session_id] = []
+                    sessions[session_id].append(point)
                 
-                # Add data points
-                for point in session_points:
-                    timestamp = point['timestamp']
-                    # Convert to chart.js time format (milliseconds since epoch)
-                    timestamp_ms = timestamp * 1000
+                # Create separate datasets for each session
+                for j, (session_id, session_points) in enumerate(sessions.items()):
+                    # Skip sessions with no data
+                    if not session_points:
+                        continue
+                        
+                    # Sort by timestamp
+                    session_points.sort(key=lambda x: x['timestamp'])
                     
-                    dataset['data'].append({
-                        'x': timestamp_ms,
-                        'y': point.get('overall_token_throughput', 0)
-                    })
-                
-                token_datasets.append(dataset)
+                    # Create dataset for this session
+                    worker_dataset = {
+                        'label': f"{worker_id} (session {session_id[:8]})",
+                        'type': 'line',
+                        'data': [],
+                        'borderColor': self._adjust_color_brightness(color, j * 20),
+                        'backgroundColor': 'transparent',
+                        'borderWidth': 1,
+                        'pointRadius': 1,
+                        'fill': 'false',
+                        'order': 2  # Draw on top of the histogram
+                    }
+                    
+                    # Add data points - try both recent and overall token throughput
+                    for point in session_points:
+                        timestamp = point['timestamp']
+                        # Convert to chart.js time format (milliseconds since epoch)
+                        timestamp_ms = timestamp * 1000
+                        
+                        # Use recent_token_throughput if available, otherwise try overall_token_throughput
+                        throughput = point.get('recent_token_throughput', 0)
+                        if throughput == 0:
+                            throughput = point.get('overall_token_throughput', 0)
+                        
+                        worker_dataset['data'].append({
+                            'x': timestamp_ms,
+                            'y': throughput
+                        })
+                    
+                    # Only add datasets with actual data
+                    if worker_dataset['data']:
+                        token_datasets.append(worker_dataset)
         
-        # Generate labels as formatted times
-        labels = []
+        # Combine all datasets, with the total histogram first
+        all_datasets = [total_token_dataset, total_token_trend_dataset] + token_datasets
         
         return {
-            'labels': labels,  # Not needed for time series
-            'datasets': token_datasets
+            'datasets': all_datasets
         }
 
     def get_dashboard_html(self) -> str:
@@ -606,20 +850,20 @@ class MonitoringService:
 
         # Initialize charts
         charts_js = f"""
-        // Throughput Chart
+        // Throughput Chart (Cumulative Progress)
         var throughputCtx = document.getElementById('throughputChart').getContext('2d');
         var throughputChart = new Chart(throughputCtx, {{
             type: 'line',
             data: {chart_data},
             options: {{
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: 'false',
                 scales: {{
                     x: {{
                         type: 'time',
                         time: {{
                             unit: 'minute',
-                            tooltipFormat: 'HH:mm:ss',
+                            tooltipFormat: 'MMM dd, HH:mm:ss',
                             displayFormats: {{
                                 minute: 'HH:mm'
                             }}
@@ -632,14 +876,16 @@ class MonitoringService:
                     y: {{
                         title: {{
                             display: true,
-                            text: 'Items/second'
-                        }}
+                            text: 'Cumulative Items Processed'
+                        }},
+                        beginAtZero: true,
+                        min: 0  // Force the minimum to be exactly 0
                     }}
                 }},
                 plugins: {{
                     title: {{
                         display: true,
-                        text: 'Processing Throughput Over Time'
+                        text: 'Cumulative Progress Over Time'
                     }},
                     tooltip: {{
                         callbacks: {{
@@ -649,7 +895,7 @@ class MonitoringService:
                                     label += ': ';
                                 }}
                                 if (context.parsed.y !== null) {{
-                                    label += context.parsed.y.toFixed(2) + ' items/s';
+                                    label += context.parsed.y.toFixed(0) + ' items';
                                 }}
                                 return label;
                             }}
@@ -659,20 +905,25 @@ class MonitoringService:
             }}
         }});
         
-        // Token Throughput Chart
+        // Token Throughput Chart (Histogram)
         var tokenThroughputCtx = document.getElementById('tokenThroughputChart').getContext('2d');
+        var tokenThroughputData = {token_throughput_chart_json};
+        
+        // Debug output to check if data is empty
+        console.log("Token Throughput Data:", tokenThroughputData);
+        
         var tokenThroughputChart = new Chart(tokenThroughputCtx, {{
-            type: 'line',
-            data: {token_throughput_chart_json},
+            type: 'bar',  // Default type is bar (histogram)
+            data: tokenThroughputData,
             options: {{
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: 'false',
                 scales: {{
                     x: {{
                         type: 'time',
                         time: {{
                             unit: 'minute',
-                            tooltipFormat: 'HH:mm:ss',
+                            tooltipFormat: 'MMM dd, HH:mm:ss',
                             displayFormats: {{
                                 minute: 'HH:mm'
                             }}
@@ -686,7 +937,9 @@ class MonitoringService:
                         title: {{
                             display: true,
                             text: 'Tokens/second'
-                        }}
+                        }},
+                        beginAtZero: true,
+                        min: 0  // Force the minimum to be exactly 0
                     }}
                 }},
                 plugins: {{
@@ -722,6 +975,16 @@ class MonitoringService:
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1"></script>
             <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+            <script>
+                // Enable mixed chart types (bar + line)
+                Chart.defaults.set('plugins.legend', {{
+                    position: 'top',
+                    labels: {{
+                        usePointStyle: true,
+                        padding: 15
+                    }}
+                }});
+            </script>
             <style>
                 body {{ font-family: Arial, sans-serif; margin: 20px; }}
                 .metrics-grid {{
@@ -920,12 +1183,13 @@ class MonitoringService:
                     data: chartData,
                     options: {{
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: 'false',
                         scales: {{
                             x: {{
                                 type: 'time',
                                 time: {{
-                                    unit: 'minute'
+                                    unit: 'minute',
+                                    tooltipFormat: 'MMM dd, HH:mm:ss'
                                 }},
                                 title: {{
                                     display: true,
@@ -933,9 +1197,11 @@ class MonitoringService:
                                 }}
                             }},
                             y: {{
+                                beginAtZero: true,
+                                min: 0,  // Force the minimum to be exactly 0
                                 title: {{
                                     display: true,
-                                    text: 'Cumulative Images Processed'
+                                    text: 'Cumulative Items Processed'
                                 }}
                             }}
                         }},
@@ -947,7 +1213,14 @@ class MonitoringService:
                             tooltip: {{
                                 callbacks: {{
                                     label: function(context) {{
-                                        return `${{context.dataset.label}}: ${{context.parsed.y.toFixed(0)}} images`;
+                                        var label = context.dataset.label || '';
+                                        if (label) {{
+                                            label += ': ';
+                                        }}
+                                        if (context.parsed.y !== null) {{
+                                            label += context.parsed.y.toFixed(0) + ' items';
+                                        }}
+                                        return label;
                                     }}
                                 }}
                             }}
