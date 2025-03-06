@@ -16,7 +16,7 @@ envs:
   MODEL_NAME: "Alibaba-NLP/gte-Qwen2-7B-instruct"
   DATASET_NAME: "McAuley-Lab/Amazon-Reviews-2023"
   DATASET_CONFIG: "raw_review_Books"
-  EMBEDDINGS_BUCKET_NAME: sky-text-embeddings-2  # Bucket name for storing embeddings
+  EMBEDDINGS_BUCKET_NAME: sky-text-embeddings-6  # Bucket name for storing embeddings
   WORKER_ID: ''
 
 file_mounts:
@@ -37,14 +37,23 @@ run: |
   # Initialize and download the model
   HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download --local-dir /tmp/model $MODEL_NAME
   
-  # Start vLLM service in background
+  # Create metrics directory for monitoring service
+  mkdir -p /output/metrics
+  
+  # Set worker ID for metrics tracking
+  if [ -z "$WORKER_ID" ]; then
+    export WORKER_ID="worker_$(date +%s)_$(hostname)"
+    echo "Generated worker ID: $WORKER_ID"
+  fi
+  
+  # Start vLLM service in background with token counting enabled
   python -m vllm.entrypoints.openai.api_server \
     --host 0.0.0.0 \
     --model /tmp/model \
     --max-model-len 3072 \
-    --task embed &
+    --task embed > /dev/null 2>&1 &
 
-  # Wait for vLLM to be ready by checking the health endpoint
+  # Wait for vLLM service to be ready by checking the health endpoint
   echo "Waiting for vLLM service to be ready..."
   while ! curl -s http://localhost:8000/health > /dev/null; do
     sleep 5
@@ -55,6 +64,7 @@ run: |
   # Process the assigned range of documents
   echo "Processing documents from $START_IDX to $END_IDX"
   
+  # Process text documents and track token metrics
   python scripts/text_vector_processor.py \
     --output-path "/output/embeddings_${START_IDX}_${END_IDX}.parquet" \
     --start-idx $START_IDX \
@@ -67,6 +77,9 @@ run: |
     --dataset-name $DATASET_NAME \
     --dataset-config $DATASET_CONFIG
 
+  # Print tokens statistics summary from metrics
+  echo "Embedding generation complete. Token statistics saved to metrics."
+  
   # Clean up vLLM service
   pkill -f "python -m vllm.entrypoints.openai.api_server"
   echo "vLLM service has been stopped" 

@@ -29,6 +29,10 @@ class MonitoringService:
         self.throughput_history: DefaultDict[str, List[Dict]] = defaultdict(list)
         self.last_processed_count: Dict[str, int] = {}
         
+        # Track token throughput
+        self.token_throughput_history: DefaultDict[str, List[Dict]] = defaultdict(list)
+        self.last_token_count: Dict[str, int] = {}
+        
         # Worker history tracking
         self.worker_history: DefaultDict[str, List[Dict]] = defaultdict(list)
         self.worker_sessions: DefaultDict[str, List[str]] = defaultdict(list)
@@ -43,6 +47,9 @@ class MonitoringService:
             'overall_progress': 0.0,
             'overall_throughput': 0.0,
             'recent_throughput': 0.0,
+            'overall_token_throughput': 0.0,
+            'recent_token_throughput': 0.0,
+            'total_tokens': 0,
             'estimated_time_remaining': None,
             'total_restarts': 0
         }
@@ -110,6 +117,65 @@ class MonitoringService:
             })
         
         self.last_processed_count[worker_id] = current_count
+        
+        # Track token throughput if available in metrics
+        if 'total_tokens' in metrics:
+            current_tokens = metrics['total_tokens']
+            
+            if worker_id in self.last_token_count:
+                token_diff = current_tokens - self.last_token_count[worker_id]
+                
+                # Only update if there's a meaningful time difference and token change
+                if time_diff > 0 and token_diff >= 0:
+                    # Calculate token throughput
+                    token_throughput = token_diff / time_diff
+                    
+                    # Calculate overall token throughput since the start of this session
+                    session_token_start = 0
+                    
+                    # Find the start of this session for tokens
+                    if worker_id in self.token_throughput_history and self.token_throughput_history[worker_id]:
+                        for point in self.token_throughput_history[worker_id]:
+                            if point.get('session_id') == session_id:
+                                if session_start_time is None or point['timestamp'] < session_start_time:
+                                    session_start_time = point['timestamp']
+                                    session_token_start = point.get('cumulative_tokens', 0)
+                    
+                    overall_token_throughput = 0
+                    if session_start_time is not None and current_time > session_start_time:
+                        overall_time = current_time - session_start_time
+                        overall_tokens = current_tokens - session_token_start
+                        overall_token_throughput = overall_tokens / overall_time if overall_time > 0 else 0
+                    
+                    # Add new data point for token throughput
+                    self.token_throughput_history[worker_id].append({
+                        'timestamp': current_time,
+                        'recent_token_throughput': token_throughput,
+                        'overall_token_throughput': overall_token_throughput,
+                        'cumulative_tokens': current_tokens,
+                        'session_id': session_id,
+                        'interval': time_diff,
+                        'token_change': token_diff
+                    })
+                    
+                    # Remove old data points outside history window
+                    self.token_throughput_history[worker_id] = [
+                        point for point in self.token_throughput_history[worker_id]
+                        if point['timestamp'] > cutoff_time
+                    ]
+            else:
+                # First token data point
+                self.token_throughput_history[worker_id].append({
+                    'timestamp': current_time,
+                    'recent_token_throughput': 0,
+                    'overall_token_throughput': 0,
+                    'cumulative_tokens': current_tokens,
+                    'session_id': session_id,
+                    'interval': 0,
+                    'token_change': 0
+                })
+            
+            self.last_token_count[worker_id] = current_tokens
 
     async def read_worker_history(self, worker_id: str):
         """Read the complete history for a worker."""
@@ -179,15 +245,19 @@ class MonitoringService:
             failed_workers = 0
             total_progress = 0
             total_items = 0
+            total_tokens = 0
             
             # Calculate throughput metrics by aggregating from throughput history
             total_recent_throughput = 0
             total_overall_throughput = 0
+            total_recent_token_throughput = 0
+            total_overall_token_throughput = 0
             active_worker_count = 0
 
             for worker_id, metrics in self.worker_metrics.items():
                 total_processed += metrics['processed_count']
                 total_failed += metrics.get('failed_count', 0)
+                total_tokens += metrics.get('total_tokens', 0)
                 
                 if metrics.get('status') == 'running':
                     active_workers += 1
@@ -206,6 +276,12 @@ class MonitoringService:
                     latest = sorted(self.throughput_history[worker_id], key=lambda x: x['timestamp'])[-1]
                     total_recent_throughput += latest.get('recent_throughput', 0)
                     total_overall_throughput += latest.get('overall_throughput', 0)
+                
+                # Get the most recent token throughput data for this worker
+                if worker_id in self.token_throughput_history and self.token_throughput_history[worker_id]:
+                    latest_token = sorted(self.token_throughput_history[worker_id], key=lambda x: x['timestamp'])[-1]
+                    total_recent_token_throughput += latest_token.get('recent_token_throughput', 0)
+                    total_overall_token_throughput += latest_token.get('overall_token_throughput', 0)
 
             # Update aggregate metrics
             self.aggregate_metrics.update({
@@ -218,6 +294,9 @@ class MonitoringService:
                 'overall_progress': (total_progress / total_items * 100) if total_items > 0 else 0,
                 'overall_throughput': total_overall_throughput,
                 'recent_throughput': total_recent_throughput,
+                'overall_token_throughput': total_overall_token_throughput,
+                'recent_token_throughput': total_recent_token_throughput,
+                'total_tokens': total_tokens,
                 'estimated_time_remaining': (total_items - total_progress) / total_overall_throughput if total_overall_throughput > 0 else None,
                 'total_restarts': total_restarts
             })
@@ -273,7 +352,7 @@ class MonitoringService:
                         'data': cum_data,
                         'borderColor': session_color,
                         'backgroundColor': session_color + '20',
-                        'fill': False,
+                        'fill': 'false',
                         'tension': 0.1
                     })
         
@@ -289,9 +368,9 @@ class MonitoringService:
         b = int(hex_color[5:7], 16)
         
         # Increase brightness
-        r = min(255, r + percent)
-        g = min(255, g + percent)
-        b = min(255, b + percent)
+        r = min(255, r + int(percent))
+        g = min(255, g + int(percent))
+        b = min(255, b + int(percent))
         
         # Convert back to hex
         return f'#{r:02x}{g:02x}{b:02x}'
@@ -353,6 +432,75 @@ class MonitoringService:
         
         return sorted(session_data, key=lambda x: x.get('start_time', 0))
 
+    def get_token_throughput_chart_data(self) -> Dict:
+        """Prepare token throughput data for Chart.js."""
+        # Get the earliest and latest timestamps across all workers
+        all_timestamps = []
+        for history in self.token_throughput_history.values():
+            all_timestamps.extend(point['timestamp'] for point in history)
+        
+        if not all_timestamps:
+            return {'labels': [], 'datasets': []}
+            
+        min_time = min(all_timestamps)
+        max_time = max(all_timestamps)
+        
+        # Generate datasets for token throughput chart
+        token_datasets = []
+        colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+        
+        for i, (worker_id, history) in enumerate(self.token_throughput_history.items()):
+            color = colors[i % len(colors)]
+            
+            # Group by session ID
+            sessions = {}
+            for point in history:
+                session_id = point.get('session_id', 'unknown')
+                if session_id not in sessions:
+                    sessions[session_id] = []
+                sessions[session_id].append(point)
+            
+            # Create separate datasets for each session
+            for session_id, session_points in sessions.items():
+                # Skip sessions with no data
+                if not session_points:
+                    continue
+                    
+                # Sort by timestamp
+                session_points.sort(key=lambda x: x['timestamp'])
+                
+                # Create dataset for this session
+                dataset = {
+                    'label': f"{worker_id} (session {session_id[:8]})",
+                    'data': [],
+                    'borderColor': self._adjust_color_brightness(color, 0),
+                    'backgroundColor': self._adjust_color_brightness(color, 80),
+                    'borderWidth': 2,
+                    'pointRadius': 1,
+                    'fill': 'false'
+                }
+                
+                # Add data points
+                for point in session_points:
+                    timestamp = point['timestamp']
+                    # Convert to chart.js time format (milliseconds since epoch)
+                    timestamp_ms = timestamp * 1000
+                    
+                    dataset['data'].append({
+                        'x': timestamp_ms,
+                        'y': point.get('overall_token_throughput', 0)
+                    })
+                
+                token_datasets.append(dataset)
+        
+        # Generate labels as formatted times
+        labels = []
+        
+        return {
+            'labels': labels,  # Not needed for time series
+            'datasets': token_datasets
+        }
+
     def get_dashboard_html(self) -> str:
         """Generate HTML dashboard."""
         refresh_rate = 5  # seconds
@@ -360,8 +508,12 @@ class MonitoringService:
         # Convert metrics to human-readable format
         metrics = self.aggregate_metrics.copy()
         metrics['overall_progress'] = f"{metrics['overall_progress']:.2f}%"
-        metrics['overall_throughput'] = f"{metrics['overall_throughput']:.2f} img/s"
-        metrics['recent_throughput'] = f"{metrics['recent_throughput']:.2f} img/s"
+        metrics['overall_throughput'] = f"{metrics['overall_throughput']:.2f} requests/s"
+        metrics['recent_throughput'] = f"{metrics['recent_throughput']:.2f} requests/s"
+        metrics['overall_token_throughput'] = f"{metrics['overall_token_throughput']:.2f} tokens/s"
+        metrics['recent_token_throughput'] = f"{metrics['recent_token_throughput']:.2f} tokens/s"
+        metrics['total_tokens_formatted'] = f"{metrics['total_tokens']:,}"
+        
         if metrics['estimated_time_remaining']:
             hours = metrics['estimated_time_remaining'] / 3600
             metrics['estimated_time_remaining'] = f"{hours:.1f} hours"
@@ -388,6 +540,12 @@ class MonitoringService:
             elif worker.get('status') == 'failed' or worker.get('status') == 'terminated':
                 status_class = 'status-failed'
             
+            # Get token throughput if available
+            token_throughput = "N/A"
+            if worker_id in self.token_throughput_history and self.token_throughput_history[worker_id]:
+                latest_token = sorted(self.token_throughput_history[worker_id], key=lambda x: x['timestamp'])[-1]
+                token_throughput = f"{latest_token.get('recent_token_throughput', 0):.2f} tokens/s"
+            
             row = f"""
             <tr>
                 <td>{worker_id}</td>
@@ -395,9 +553,10 @@ class MonitoringService:
                 <td>{progress:.2f}%</td>
                 <td>{worker.get('processed_count', 0)}</td>
                 <td>{worker.get('failed_count', 0)}</td>
-                <td>{worker.get('images_per_second', 0):.2f}</td>
+                <td>{worker.get('items_per_second', 0):.2f}</td>
+                <td>{token_throughput}</td>
                 <td>{restart_count}</td>
-                <td>{datetime.fromtimestamp(worker.get('last_update', 0)).strftime('%Y-%m-%d %H:%M:%S')}</td>
+                <td>{datetime.fromtimestamp(worker.get('timestamp', worker.get('last_update', 0))).strftime('%Y-%m-%d %H:%M:%S')}</td>
             </tr>
             """
             worker_rows.append(row)
@@ -440,6 +599,119 @@ class MonitoringService:
 
         # Get chart data
         chart_data = json.dumps(self.get_throughput_chart_data())
+        
+        # Add token throughput chart initialization
+        token_throughput_data = self.get_token_throughput_chart_data()
+        token_throughput_chart_json = json.dumps(token_throughput_data)
+
+        # Initialize charts
+        charts_js = f"""
+        // Throughput Chart
+        var throughputCtx = document.getElementById('throughputChart').getContext('2d');
+        var throughputChart = new Chart(throughputCtx, {{
+            type: 'line',
+            data: {chart_data},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {{
+                    x: {{
+                        type: 'time',
+                        time: {{
+                            unit: 'minute',
+                            tooltipFormat: 'HH:mm:ss',
+                            displayFormats: {{
+                                minute: 'HH:mm'
+                            }}
+                        }},
+                        title: {{
+                            display: true,
+                            text: 'Time'
+                        }}
+                    }},
+                    y: {{
+                        title: {{
+                            display: true,
+                            text: 'Items/second'
+                        }}
+                    }}
+                }},
+                plugins: {{
+                    title: {{
+                        display: true,
+                        text: 'Processing Throughput Over Time'
+                    }},
+                    tooltip: {{
+                        callbacks: {{
+                            label: function(context) {{
+                                var label = context.dataset.label || '';
+                                if (label) {{
+                                    label += ': ';
+                                }}
+                                if (context.parsed.y !== null) {{
+                                    label += context.parsed.y.toFixed(2) + ' items/s';
+                                }}
+                                return label;
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        }});
+        
+        // Token Throughput Chart
+        var tokenThroughputCtx = document.getElementById('tokenThroughputChart').getContext('2d');
+        var tokenThroughputChart = new Chart(tokenThroughputCtx, {{
+            type: 'line',
+            data: {token_throughput_chart_json},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {{
+                    x: {{
+                        type: 'time',
+                        time: {{
+                            unit: 'minute',
+                            tooltipFormat: 'HH:mm:ss',
+                            displayFormats: {{
+                                minute: 'HH:mm'
+                            }}
+                        }},
+                        title: {{
+                            display: true,
+                            text: 'Time'
+                        }}
+                    }},
+                    y: {{
+                        title: {{
+                            display: true,
+                            text: 'Tokens/second'
+                        }}
+                    }}
+                }},
+                plugins: {{
+                    title: {{
+                        display: true,
+                        text: 'Token Throughput Over Time'
+                    }},
+                    tooltip: {{
+                        callbacks: {{
+                            label: function(context) {{
+                                var label = context.dataset.label || '';
+                                if (label) {{
+                                    label += ': ';
+                                }}
+                                if (context.parsed.y !== null) {{
+                                    label += context.parsed.y.toFixed(2) + ' tokens/s';
+                                }}
+                                return label;
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        }});
+        """
 
         return f"""
         <!DOCTYPE html>
@@ -563,18 +835,31 @@ class MonitoringService:
                     <div class="metric-value">{metrics['total_processed']}</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Failed Images</div>
+                    <div class="metric-label">Failed Requests</div>
                     <div class="metric-value">{metrics['total_failed']}</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">VM Restarts</div>
                     <div class="metric-value">{metrics['total_restarts']}</div>
                 </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Tokens</div>
+                    <div class="metric-value">{metrics['total_tokens_formatted']}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Token Throughput</div>
+                    <div class="metric-value">{metrics['overall_token_throughput']}</div>
+                </div>
             </div>
 
             <h2>Cumulative Progress</h2>
             <div class="chart-container">
                 <canvas id="throughputChart"></canvas>
+            </div>
+            
+            <h2>Token Throughput</h2>
+            <div class="chart-container">
+                <canvas id="tokenThroughputChart"></canvas>
             </div>
             
             <div class="tabs">
@@ -592,7 +877,8 @@ class MonitoringService:
                             <th>Progress</th>
                             <th>Processed</th>
                             <th>Failed</th>
-                            <th>Speed (img/s)</th>
+                            <th>Speed (requests/s)</th>
+                            <th>Token Speed</th>
                             <th>Restarts</th>
                             <th>Last Update</th>
                         </tr>

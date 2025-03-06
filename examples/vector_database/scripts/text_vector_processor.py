@@ -3,6 +3,7 @@ import logging
 import os
 import pickle
 import time
+import json
 from pathlib import Path
 from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
@@ -80,6 +81,16 @@ class TextVectorProcessor(BaseVectorProcessor):
         self.chunk_overlap = chunk_overlap
         self.next_chunk_idx = 0  # Global chunk counter
         self.chunks = []  # Store preprocessed chunks
+        
+        # Token tracking attributes
+        self.total_tokens = 0
+        self.batch_count = 0
+        self.token_metrics = {
+            'total_tokens': 0,
+            'avg_tokens_per_batch': 0,
+            'avg_tokens_per_chunk': 0,
+            'token_count_by_batch': {}
+        }
 
     async def setup_model(self):
         """Verify vLLM endpoint is accessible."""
@@ -303,7 +314,8 @@ class TextVectorProcessor(BaseVectorProcessor):
                 # Create request payload
                 request_payload = {
                     "model": self.model_name,
-                    "input": prompts
+                    "input": prompts,
+                    "encoding_format": "float"
                 }
                 
                 # Send request to vLLM service
@@ -320,6 +332,24 @@ class TextVectorProcessor(BaseVectorProcessor):
                     raise ValueError(f"Unexpected response format: {result}")
                 
                 embeddings = [item['embedding'] for item in result['data']]
+                
+                # Extract token counts if available
+                batch_token_count = 0
+                if 'usage' in result:
+                    batch_token_count = result['usage'].get('total_tokens', 0)
+                    self.total_tokens += batch_token_count
+                    self.batch_count += 1
+                    
+                    # Update token metrics
+                    self.token_metrics['total_tokens'] = self.total_tokens
+                    self.token_metrics['avg_tokens_per_batch'] = self.total_tokens / self.batch_count
+                    self.token_metrics['avg_tokens_per_chunk'] = self.total_tokens / (self.batch_count * len(batch_chunks))
+                    self.token_metrics['token_count_by_batch'][str(self.batch_count)] = batch_token_count
+                    
+                    # Log token usage
+                    logging.info(f"Batch {self.batch_count} token count: {batch_token_count}, "
+                                f"Total tokens: {self.total_tokens}, "
+                                f"Avg tokens per batch: {self.token_metrics['avg_tokens_per_batch']:.2f}")
                 
                 # Combine embeddings with metadata
                 for chunk, embedding in zip(batch_chunks, embeddings):
@@ -339,7 +369,8 @@ class TextVectorProcessor(BaseVectorProcessor):
                         'embedding': np.array(embedding),
                         'document_url': chunk.get('document_url'),
                         'document_created_timestamp': chunk.get('document_created_timestamp'),
-                        'document_downloaded_timestamp': chunk.get('document_downloaded_timestamp')
+                        'document_downloaded_timestamp': chunk.get('document_downloaded_timestamp'),
+                        'token_count': batch_token_count // len(batch_chunks) if batch_token_count > 0 else 0
                     }))
                     self.processed_count += 1
                     
@@ -352,6 +383,30 @@ class TextVectorProcessor(BaseVectorProcessor):
                     self.processed_count += 1
                 
         return results
+
+    def update_metrics(self):
+        """Override update_metrics to include token statistics."""
+        # Call the parent class method first
+        super().update_metrics()
+        
+        # Add token metrics to the most recent metrics
+        if self.metrics_history and self.total_tokens > 0:
+            # Update the most recent metrics entry with token information
+            self.metrics_history[-1].update({
+                'total_tokens': self.total_tokens,
+                'avg_tokens_per_batch': self.token_metrics['avg_tokens_per_batch'],
+                'avg_tokens_per_chunk': self.token_metrics['avg_tokens_per_chunk'],
+                'tokens_per_second': self.total_tokens / self.metrics_history[-1]['elapsed_seconds'] 
+                                    if self.metrics_history[-1]['elapsed_seconds'] > 0 else 0
+            })
+            
+            # Save the updated metrics
+            try:
+                with open(self.metrics_file, 'w') as f:
+                    json.dump(self.metrics_history[-1], f)
+                self.save_metrics_history()
+            except Exception as e:
+                logging.warning(f"Failed to save metrics with token stats: {e}")
 
     def save_results_to_parquet(self, results: List[Tuple[int, Dict]]):
         """Save results to a parquet file with partition."""
@@ -376,7 +431,8 @@ class TextVectorProcessor(BaseVectorProcessor):
                 'embedding': embedding_bytes,
                 'document_url': item.get('document_url'),
                 'document_created_timestamp': item.get('document_created_timestamp'),
-                'document_downloaded_timestamp': item.get('document_downloaded_timestamp')
+                'document_downloaded_timestamp': item.get('document_downloaded_timestamp'),
+                'token_count': item.get('token_count', 0)  # Include token count
             })
 
         # Create DataFrame
@@ -392,6 +448,10 @@ class TextVectorProcessor(BaseVectorProcessor):
         # Save to parquet
         df.to_parquet(output_path)
         logging.info(f"Saved {len(df)} embeddings to {output_path}")
+        logging.info(f"Token metrics: total={self.total_tokens}, avg_per_batch={self.token_metrics['avg_tokens_per_batch']:.2f}")
+        
+        # Update metrics after saving results
+        self.update_metrics()
         
         # Increment partition counter
         self.partition_counter += 1
