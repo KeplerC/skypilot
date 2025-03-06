@@ -51,11 +51,11 @@ def main():
                         help='Global start index in dataset')
     parser.add_argument('--end-idx',
                         type=int,
-                        default= 1000000, #29475453, # text
+                        default= 29475453, #29475453, # text
                         help='Global end index in dataset, not inclusive')
     parser.add_argument('--num-jobs',
                         type=int,
-                        default=10,
+                        default=300,
                         help='Number of jobs to partition the work across')
     parser.add_argument('--env-path',
                         type=str,
