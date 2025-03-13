@@ -1,0 +1,64 @@
+resources:
+  accelerators: {L4:8, A100-80GB:2}  # TinyZero recommends at least 2 GPUs for 3B+ models
+  ports:
+    - 8000
+  disk_size: 100  # Increased disk size for datasets and models
+  disk_tier: best
+  use_spot: true
+
+envs:
+  MODEL_PATH: "/home/ubuntu/models/qwen2.5-3b"  # Path where model will be downloaded
+  DATA_DIR: "/home/ubuntu/data/countdown"  # Where the dataset will be stored
+  EXPERIMENT_NAME: "countdown-qwen2.5-3b"
+  ROLLOUT_TP_SIZE: 4  # Tensor parallel size for rollout
+  VLLM_ATTENTION_BACKEND: "XFORMERS"
+  WANDB_API_KEY: "8bf222713db45c8d8cda5c4231f02a6940d80504"  # Add your W&B API key here if you want to log
+
+setup: |
+  # Clone TinyZero repository
+  git clone https://github.com/Jiayi-Pan/TinyZero.git
+  cd TinyZero
+  
+  # Create conda environment
+  conda create -n zero python=3.9 -y
+  source $(conda info --base)/etc/profile.d/conda.sh
+  conda activate zero
+  
+  # Install PyTorch
+  pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu121
+  
+  # Install VLLM and dependencies
+  pip install vllm==0.6.3 ray
+  
+  # Install TinyZero and its dependencies
+  pip install -e .
+  
+  # Install Flash Attention 2 and other dependencies
+  pip install flash-attn --no-build-isolation
+  pip install wandb IPython matplotlib
+  
+  # Download model
+  mkdir -p $MODEL_PATH
+  # Example for downloading Qwen 2.5 3B model - adjust as needed
+  pip install huggingface_hub
+  python -c "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen2.5-3B', local_dir='$MODEL_PATH')"
+  
+  # Prepare countdown dataset
+  mkdir -p $DATA_DIR
+  python ./examples/data_preprocess/countdown.py --local_dir=$DATA_DIR
+
+run: |
+  cd TinyZero
+  source $(conda info --base)/etc/profile.d/conda.sh
+  conda activate zero
+  
+  # Set environment variables
+  export N_GPUS=$SKYPILOT_NUM_GPUS_PER_NODE
+  export BASE_MODEL=$MODEL_PATH
+  export DATA_DIR=$DATA_DIR
+  export ROLLOUT_TP_SIZE=$ROLLOUT_TP_SIZE
+  export EXPERIMENT_NAME=$EXPERIMENT_NAME
+  export VLLM_ATTENTION_BACKEND=$VLLM_ATTENTION_BACKEND
+  
+  # Run the training script
+  bash ./scripts/train_tiny_zero.sh
