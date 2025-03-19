@@ -1,0 +1,741 @@
+I 03-17 18:35:29 controller.py:59] DAG:
+I 03-17 18:35:29 controller.py:59] [Task<name=compute-text-vectors>(run='# Initialize and dow...')
+I 03-17 18:35:29 controller.py:59]   resources: AWS(cpus=4, {'L4': 1}, region=ap-northeast-2)]
+I 03-17 18:35:29 controller.py:195] Submitted managed job 116 (task: 0, name: 'compute-text-vectors'); SKYPILOT_TASK_ID: sky-managed-2025-03-17-18-35-29-229957_compute-text-vectors_116-0
+I 03-17 18:35:29 controller.py:199] Started monitoring.
+I 03-17 18:35:29 state.py:451] Launching the spot cluster...
+I 03-17 18:35:30 storage.py:1058] Storage type StoreType.S3 already exists.
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:35:31 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:35:31 optimizer.py:749] 
+I 03-17 18:35:31 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:35:31 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:35:31 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:35:31 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:35:31 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:35:31 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-35-31-274117/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-35-31-274117/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:35:31 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 18:36:07 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 18:36:55 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 18:36:56 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 18:36:56 cloud_vm_ray_backend.py:2097] 
+W 03-17 18:36:56 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-35-31-274117/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-35-31-274117/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 18:36:56 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-18-35-31-274117/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:36:56 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 18:36:56 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 18:36:56 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 18:36:56 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 18:36:56 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 18:36:56 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 18:36:56 recovery_strategy.py:364] Retrying to launch the cluster in 68.6 seconds.
+I 03-17 18:38:06 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:38:07 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:38:07 optimizer.py:749] 
+I 03-17 18:38:07 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:38:07 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:38:07 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:38:07 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:38:07 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:38:07 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-38-07-036122/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-38-07-036122/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:38:07 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 18:38:10 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 18:38:22 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 18:38:22 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 18:38:22 cloud_vm_ray_backend.py:2097] 
+W 03-17 18:38:22 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-38-07-036122/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-38-07-036122/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 18:38:22 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-18-38-07-036122/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:38:22 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 18:38:22 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 18:38:22 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 18:38:22 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 18:38:22 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 18:38:22 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 18:38:23 recovery_strategy.py:364] Retrying to launch the cluster in 131.9 seconds.
+I 03-17 18:40:35 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:40:36 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:40:36 optimizer.py:749] 
+I 03-17 18:40:36 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:40:36 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:40:36 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:40:36 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:40:36 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:40:36 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-40-36-600073/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-40-36-600073/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:40:36 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 18:40:51 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 18:40:53 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 18:40:53 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 18:40:53 cloud_vm_ray_backend.py:2097] 
+W 03-17 18:40:53 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-40-36-600073/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-40-36-600073/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 18:40:53 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-18-40-36-600073/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:40:53 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 18:40:53 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 18:40:53 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 18:40:53 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 18:40:53 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 18:40:53 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 18:40:54 recovery_strategy.py:364] Retrying to launch the cluster in 139.8 seconds.
+I 03-17 18:43:14 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:43:15 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:43:15 optimizer.py:749] 
+I 03-17 18:43:15 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:43:15 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:43:15 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:43:15 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:43:15 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:43:15 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-43-15-607617/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-43-15-607617/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:43:15 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 18:43:23 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 18:43:30 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 18:43:30 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 18:43:30 cloud_vm_ray_backend.py:2097] 
+W 03-17 18:43:30 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-43-15-607617/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-43-15-607617/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 18:43:30 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-18-43-15-607617/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:43:31 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 18:43:31 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 18:43:31 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 18:43:31 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 18:43:31 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 18:43:31 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 18:43:31 recovery_strategy.py:364] Retrying to launch the cluster in 138.5 seconds.
+I 03-17 18:45:51 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:45:51 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:45:51 optimizer.py:749] 
+I 03-17 18:45:51 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:45:51 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:45:51 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:45:51 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:45:51 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:45:51 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-45-51-809347/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-45-51-809347/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:45:51 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 18:45:55 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 18:45:56 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 18:45:56 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 18:45:56 cloud_vm_ray_backend.py:2097] 
+W 03-17 18:45:56 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-45-51-809347/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-45-51-809347/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 18:45:56 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-18-45-51-809347/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:45:57 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 18:45:57 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 18:45:57 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 18:45:57 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 18:45:57 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 18:45:57 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 18:45:57 recovery_strategy.py:364] Retrying to launch the cluster in 158.3 seconds.
+I 03-17 18:48:36 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:48:37 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:48:37 optimizer.py:749] 
+I 03-17 18:48:37 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:48:37 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:48:37 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:48:37 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:48:37 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:48:37 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-48-37-459285/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-48-37-459285/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:48:37 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 18:48:40 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 18:48:41 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 18:48:42 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 18:48:42 cloud_vm_ray_backend.py:2097] 
+W 03-17 18:48:42 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-48-37-459285/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-48-37-459285/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 18:48:42 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-18-48-37-459285/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:48:42 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 18:48:42 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 18:48:42 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 18:48:42 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 18:48:42 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 18:48:42 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 18:48:42 recovery_strategy.py:364] Retrying to launch the cluster in 245.2 seconds.
+I 03-17 18:52:49 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:52:49 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:52:49 optimizer.py:749] 
+I 03-17 18:52:49 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:52:49 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:52:49 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:52:49 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:52:49 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:52:49 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-52-49-805667/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-52-49-805667/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:52:49 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 18:52:52 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 18:52:54 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 18:52:54 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 18:52:54 cloud_vm_ray_backend.py:2097] 
+W 03-17 18:52:54 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-52-49-805667/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-52-49-805667/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 18:52:54 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-18-52-49-805667/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:52:54 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 18:52:54 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 18:52:54 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 18:52:54 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 18:52:54 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 18:52:54 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 18:52:55 recovery_strategy.py:364] Retrying to launch the cluster in 312.0 seconds.
+I 03-17 18:58:08 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:58:08 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:58:08 optimizer.py:749] 
+I 03-17 18:58:08 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:58:08 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:58:08 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:58:08 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:58:08 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:58:08 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-58-08-836763/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-58-08-836763/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:58:09 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 18:58:11 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 18:58:13 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 18:58:13 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 18:58:13 cloud_vm_ray_backend.py:2097] 
+W 03-17 18:58:13 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-58-08-836763/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-58-08-836763/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 18:58:13 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-18-58-08-836763/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:58:13 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 18:58:13 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 18:58:13 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 18:58:13 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 18:58:13 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 18:58:13 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 18:58:14 recovery_strategy.py:364] Retrying to launch the cluster in 366.7 seconds.
+I 03-17 19:04:22 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:04:22 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:04:22 optimizer.py:749] 
+I 03-17 19:04:22 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:04:22 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:04:22 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:04:22 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:04:22 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:04:22 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-04-22-795819/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-04-22-795819/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:04:22 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:04:25 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:04:27 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:04:27 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:04:27 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:04:27 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-04-22-795819/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-04-22-795819/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:04:27 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-04-22-795819/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:04:27 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:04:27 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:04:27 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:04:27 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:04:27 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:04:27 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:04:28 recovery_strategy.py:364] Retrying to launch the cluster in 255.8 seconds.
+I 03-17 19:08:44 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:08:45 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:08:45 optimizer.py:749] 
+I 03-17 19:08:45 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:08:45 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:08:45 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:08:45 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:08:45 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:08:45 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-08-45-627593/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-08-45-627593/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:08:45 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:08:48 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:08:49 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:08:50 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:08:50 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:08:50 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-08-45-627593/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-08-45-627593/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:08:50 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-08-45-627593/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:08:50 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:08:50 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:08:50 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:08:50 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:08:50 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:08:50 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:08:51 recovery_strategy.py:364] Retrying to launch the cluster in 269.6 seconds.
+I 03-17 19:13:21 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:13:22 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:13:22 optimizer.py:749] 
+I 03-17 19:13:22 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:13:22 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:13:22 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:13:22 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:13:22 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:13:22 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-13-22-629661/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-13-22-629661/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:13:22 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:13:25 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:13:31 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:13:32 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:13:32 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:13:32 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-13-22-629661/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-13-22-629661/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:13:32 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-13-22-629661/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:13:32 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:13:32 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:13:32 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:13:32 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:13:32 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:13:32 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:13:32 recovery_strategy.py:364] Retrying to launch the cluster in 294.9 seconds.
+I 03-17 19:18:28 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:18:29 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:18:29 optimizer.py:749] 
+I 03-17 19:18:29 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:18:29 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:18:29 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:18:29 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:18:29 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:18:29 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-18-29-547446/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-18-29-547446/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:18:29 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:18:32 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:18:33 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:18:34 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:18:34 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:18:34 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-18-29-547446/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-18-29-547446/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:18:34 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-18-29-547446/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:18:34 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:18:34 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:18:34 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:18:34 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:18:34 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:18:34 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:18:34 recovery_strategy.py:364] Retrying to launch the cluster in 278.9 seconds.
+I 03-17 19:23:14 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:23:15 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:23:15 optimizer.py:749] 
+I 03-17 19:23:15 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:23:15 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:23:15 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:23:15 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:23:15 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:23:15 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-23-15-642437/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-23-15-642437/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:23:15 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:23:18 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:23:19 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:23:20 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:23:20 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:23:20 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-23-15-642437/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-23-15-642437/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:23:20 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-23-15-642437/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:23:20 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:23:20 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:23:20 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:23:20 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:23:20 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:23:20 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:23:21 recovery_strategy.py:364] Retrying to launch the cluster in 277.6 seconds.
+I 03-17 19:27:59 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:28:00 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:28:00 optimizer.py:749] 
+I 03-17 19:28:00 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:28:00 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:28:00 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:28:00 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:28:00 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:28:00 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-28-00-454348/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-28-00-454348/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:28:00 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:28:03 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:28:04 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:28:05 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:28:05 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:28:05 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-28-00-454348/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-28-00-454348/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:28:05 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-28-00-454348/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:28:05 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:28:05 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:28:05 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:28:05 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:28:05 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:28:05 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:28:06 recovery_strategy.py:364] Retrying to launch the cluster in 359.0 seconds.
+I 03-17 19:34:06 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:34:06 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:34:06 optimizer.py:749] 
+I 03-17 19:34:06 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:34:06 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:34:06 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:34:06 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:34:06 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:34:06 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-34-06-799351/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-34-06-799351/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:34:06 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:34:09 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:34:11 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:34:11 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:34:11 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:34:11 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-34-06-799351/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-34-06-799351/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:34:11 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-34-06-799351/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:34:11 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:34:11 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:34:11 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:34:11 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:34:11 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:34:11 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:34:12 recovery_strategy.py:364] Retrying to launch the cluster in 369.6 seconds.
+I 03-17 19:40:22 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:40:23 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:40:23 optimizer.py:749] 
+I 03-17 19:40:23 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:40:23 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:40:23 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:40:23 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:40:23 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:40:23 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-40-23-623512/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-40-23-623512/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:40:23 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:40:26 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:40:28 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:40:28 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:40:28 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:40:28 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-40-23-623512/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-40-23-623512/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:40:28 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-40-23-623512/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:40:28 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:40:28 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:40:28 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:40:28 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:40:28 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:40:28 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:40:29 recovery_strategy.py:364] Retrying to launch the cluster in 199.8 seconds.
+I 03-17 19:43:50 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:43:50 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:43:50 optimizer.py:749] 
+I 03-17 19:43:50 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:43:50 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:43:50 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:43:50 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:43:50 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:43:50 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-43-50-859402/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-43-50-859402/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:43:51 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:43:53 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:43:55 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:43:55 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:43:55 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:43:55 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-43-50-859402/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-43-50-859402/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:43:55 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-43-50-859402/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:43:55 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:43:55 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:43:55 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:43:55 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:43:55 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:43:55 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:43:56 recovery_strategy.py:364] Retrying to launch the cluster in 259.8 seconds.
+I 03-17 19:48:17 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:48:17 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:48:17 optimizer.py:749] 
+I 03-17 19:48:17 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:48:17 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:48:17 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:48:17 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:48:17 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:48:17 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-48-17-793550/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-48-17-793550/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:48:17 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:48:26 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:48:28 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:48:28 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:48:28 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:48:28 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-48-17-793550/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-48-17-793550/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:48:28 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-48-17-793550/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:48:29 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:48:29 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:48:29 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:48:29 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:48:29 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:48:29 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:48:29 recovery_strategy.py:364] Retrying to launch the cluster in 206.3 seconds.
+I 03-17 19:51:56 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 19:51:57 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 19:51:57 optimizer.py:749] 
+I 03-17 19:51:57 optimizer.py:884] Considered resources (1 node):
+I 03-17 19:51:57 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:51:57 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 19:51:57 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 19:51:57 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 19:51:57 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-51-57-579260/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-51-57-579260/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 19:51:57 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+[2mW 03-17 19:52:00 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+[2mW 03-17 19:52:06 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2d). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2a.[0m
+W 03-17 19:52:06 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in all zones in ap-northeast-2 for {AWS(cpus=4, {'L4': 1})}. 
+W 03-17 19:52:06 cloud_vm_ray_backend.py:2097] 
+W 03-17 19:52:06 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-51-57-579260/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-19-51-57-579260/provision.log\u001b[0m</rich_update>"</sky-payload>
+E 03-17 19:52:07 cloud_vm_ray_backend.py:2904] [0m[31m⨯[0m Failed to provision resources. [2mView logs: sky api logs -l sky-2025-03-17-19-51-57-579260/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 19:52:07 recovery_strategy.py:326] Failed to launch a cluster with error: sky.exceptions.ResourcesUnavailableError: [31mFailed to provision all possible launchable resources.[0m Relax the task's resource requirements: 1x AWS(cpus=4, {'L4': 1})
+I 03-17 19:52:07 recovery_strategy.py:326] To keep retrying until the cluster is up, use the `--retry-until-up` flag.
+I 03-17 19:52:07 recovery_strategy.py:326] Reasons for provision failures (for details, please check the log above):
+I 03-17 19:52:07 recovery_strategy.py:326] Resource          Reason                                                     
+I 03-17 19:52:07 recovery_strategy.py:326] AWS(g6.xlarge,    Failed to acquire resources in all zones in ap-            
+I 03-17 19:52:07 recovery_strategy.py:326] {'L4': 1})        northeast-2 for {AWS(cpus=4, {'L4': 1})}.                  )
+I 03-17 19:52:07 recovery_strategy.py:364] Retrying to launch the cluster in 248.4 seconds.
+I 03-17 19:53:36 controller.py:543] Cancelling managed job, job_id: 116, task_id: 0
+I 03-17 19:53:36 state.py:653] Cancelling the job...
+I 03-17 19:53:36 controller.py:552] Killing controller process 51934.
+I 03-17 19:53:36 controller.py:560] Controller process 51934 killed.
+I 03-17 19:53:36 controller.py:562] Cleaning up any cluster for job 116.
+I 03-17 19:53:37 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-eqr9ajjj
+<sky-payload>"<rich_init>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-eqr9ajjj[/][/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-eqr9ajjj[/][/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-eqr9ajjj[/][/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+I 03-17 19:53:43 storage.py:1505] [32mDeleted S3 bucket skypilot-filemounts-root-726f1974-eqr9ajjj.[0m
+I 03-17 19:53:43 controller.py:571] Cluster of managed job 116 has been cleaned up.
+I 03-17 19:53:43 state.py:674] Job cancelled.

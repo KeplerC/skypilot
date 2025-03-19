@@ -55,7 +55,7 @@ def main():
                         help='Global end index in dataset, not inclusive')
     parser.add_argument('--num-jobs',
                         type=int,
-                        default=300,
+                        default=500,
                         help='Number of jobs to partition the work across')
     parser.add_argument('--env-path',
                         type=str,
@@ -68,6 +68,11 @@ def main():
                         type=str,
                         default='sky-embeddings',
                         help='Name of the bucket to store embeddings')
+    parser.add_argument('--partition-method',
+                        type=str,
+                        choices=['chunk', 'stride'],
+                        default='stride',
+                        help='Method to partition data: chunk (contiguous) or stride (interleaved)')
     args = parser.parse_args()
 
     # Try to get HF_TOKEN from environment first, then ~/.env file
@@ -102,23 +107,34 @@ def main():
 
     # Launch jobs for each partition
     for job_rank in range(args.num_jobs):
-        # Calculate index range for this job
-        job_start, job_end = calculate_job_range(args.start_idx, args.end_idx,
-                                                 job_rank, args.num_jobs)
-        
         # Create a unique worker ID
         worker_id = f"worker_{job_rank}"
-
-        # Update environment variables for this job
-        task_copy = task.update_envs({
-            'START_IDX': str(job_start),  # Convert to string for env vars
-            'END_IDX': str(job_end),
+        
+        # Update environment variables based on partition method
+        env_vars = {
             'HF_TOKEN': hf_token,
             'WORKER_ID': worker_id,
             'EMBEDDINGS_BUCKET_NAME': args.bucket_name,
-        })
+            'PARTITION_METHOD': args.partition_method,
+            'WORKER_RANK': str(job_rank),
+            'TOTAL_WORKERS': str(args.num_jobs),
+            'GLOBAL_START_IDX': str(args.start_idx),
+            'GLOBAL_END_IDX': str(args.end_idx),
+        }
+        
+        # If using chunk method, also provide start_idx and end_idx
+        if args.partition_method == 'chunk':
+            job_start, job_end = calculate_job_range(args.start_idx, args.end_idx,
+                                                 job_rank, args.num_jobs)
+            env_vars['START_IDX'] = str(job_start)
+            env_vars['END_IDX'] = str(job_end)
+            job_name = f'vector-compute-{job_start}-{job_end}'
+        else:
+            # For stride method, we use the global start/end and let the worker handle striding
+            job_name = f'vector-compute-worker-{job_rank}'
+            
+        task_copy = task.update_envs(env_vars)
 
-        job_name = f'vector-compute-{job_start}-{job_end}'
         print(f"Launching {job_name} with {worker_id}...")
         
         sky.jobs.launch(

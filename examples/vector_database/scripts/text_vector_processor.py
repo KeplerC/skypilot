@@ -42,7 +42,12 @@ class TextVectorProcessor(BaseVectorProcessor):
                  end_idx: Optional[int] = None,
                  chunk_size: int = 512,
                  chunk_overlap: int = 50,
-                 max_preprocessing_tasks: int = 10):
+                 max_preprocessing_tasks: int = 10,
+                 partition_method: str = 'chunk',
+                 worker_rank: int = 0,
+                 total_workers: int = 1,
+                 global_start_idx: int = 0,
+                 global_end_idx: Optional[int] = None):
         """Initialize the text vector processor.
         
         Args:
@@ -60,7 +65,22 @@ class TextVectorProcessor(BaseVectorProcessor):
             chunk_size: Size of document chunks
             chunk_overlap: Overlap between chunks
             max_preprocessing_tasks: Maximum number of concurrent preprocessing tasks
+            partition_method: Method of partitioning ('chunk' or 'stride')
+            worker_rank: Rank of this worker (0-based)
+            total_workers: Total number of workers
+            global_start_idx: Global starting index for all workers
+            global_end_idx: Global ending index for all workers
         """
+        # If using stride method, adjust start_idx and end_idx
+        self.partition_method = partition_method
+        self.worker_rank = worker_rank
+        self.total_workers = total_workers
+        self.global_start_idx = global_start_idx
+        self.global_end_idx = global_end_idx
+        
+        # For stride method, we'll handle the actual skipping in get_dataset_iterator
+        # but we keep the original range for BaseVectorProcessor
+        
         super().__init__(
             output_path=output_path,
             dataset_name=dataset_name,
@@ -91,6 +111,13 @@ class TextVectorProcessor(BaseVectorProcessor):
             'avg_tokens_per_chunk': 0,
             'token_count_by_batch': {}
         }
+        
+        # Log partitioning method
+        if self.partition_method == 'stride':
+            logging.info(f"Using strided partitioning: worker {self.worker_rank} of {self.total_workers}, "
+                        f"processing every {self.total_workers}th item starting from {self.global_start_idx}")
+        else:
+            logging.info(f"Using chunk partitioning: processing items from {self.start_idx} to {self.end_idx}")
 
     async def setup_model(self):
         """Verify vLLM endpoint is accessible."""
@@ -114,27 +141,64 @@ class TextVectorProcessor(BaseVectorProcessor):
                               split=self.split,
                               streaming=self.streaming,
                               trust_remote_code=True)
-
-        if self.start_idx > 0:
-            dataset = dataset.skip(self.start_idx)
-
-        for idx, item in enumerate(dataset, start=self.start_idx):
-            if self.end_idx and idx >= self.end_idx:
-                break
+        
+        # Handle different partitioning methods
+        if self.partition_method == 'stride':
+            # For stride method, we process every Nth item where N is total_workers
+            # starting from global_start_idx + worker_rank
+            start_point = self.global_start_idx + self.worker_rank
             
-            # Transform item into a document format
-            document = {
-                'id': f"{idx}",
-                'name': item.get('url', f"document_{idx}"),
-                'text': item['text'],
-                'split': self.split,
-                'source': item.get('source', self.dataset_name),
-                'created_timestamp': item.get('created_timestamp', None),
-                'downloaded_timestamp': item.get('downloaded_timestamp', None),
-                'url': item.get('url', None)
-            }
-            
-            yield idx, document
+            item_counter = 0
+            for idx, item in enumerate(dataset, start=0):
+                if idx < start_point:
+                    continue
+                
+                # Only process items that belong to this worker based on the stride
+                if (idx - start_point) % self.total_workers == 0:
+                    # Check global end condition
+                    if self.global_end_idx and idx >= self.global_end_idx:
+                        break
+                        
+                    # Transform item into a document format
+                    document = {
+                        'id': f"{idx}",
+                        'name': item.get('url', f"document_{idx}"),
+                        'text': item['text'],
+                        'split': self.split,
+                        'source': item.get('source', self.dataset_name),
+                        'created_timestamp': item.get('created_timestamp', None),
+                        'downloaded_timestamp': item.get('downloaded_timestamp', None),
+                        'url': item.get('url', None)
+                    }
+                    
+                    yield idx, document
+                    item_counter += 1
+                    
+                    # Provide some logging feedback
+                    if item_counter % 100 == 0:
+                        logging.info(f"Worker {self.worker_rank}: Processed {item_counter} items (global idx {idx})")
+        else:
+            # Original chunk behavior
+            if self.start_idx > 0:
+                dataset = dataset.skip(self.start_idx)
+
+            for idx, item in enumerate(dataset, start=self.start_idx):
+                if self.end_idx and idx >= self.end_idx:
+                    break
+                
+                # Transform item into a document format
+                document = {
+                    'id': f"{idx}",
+                    'name': item.get('url', f"document_{idx}"),
+                    'text': item['text'],
+                    'split': self.split,
+                    'source': item.get('source', self.dataset_name),
+                    'created_timestamp': item.get('created_timestamp', None),
+                    'downloaded_timestamp': item.get('downloaded_timestamp', None),
+                    'url': item.get('url', None)
+                }
+                
+                yield idx, document
 
     async def _preprocess_input(self, document: Dict) -> Optional[List[Dict]]:
         """Chunk a document into smaller pieces."""
@@ -487,6 +551,22 @@ async def main():
     parser.add_argument('--dataset-config', type=str, 
                         default='all',
                         help='Dataset configuration')
+    parser.add_argument('--partition-method', type=str,
+                        choices=['chunk', 'stride'],
+                        default=os.environ.get('PARTITION_METHOD', 'stride'),
+                        help='Method to partition data: chunk (contiguous) or stride (interleaved)')
+    parser.add_argument('--worker-rank', type=int,
+                        default=int(os.environ.get('WORKER_RANK', 0)),
+                        help='Rank of this worker (0-based)')
+    parser.add_argument('--total-workers', type=int,
+                        default=int(os.environ.get('TOTAL_WORKERS', 1)),
+                        help='Total number of workers')
+    parser.add_argument('--global-start-idx', type=int,
+                        default=int(os.environ.get('GLOBAL_START_IDX', 0)),
+                        help='Global starting index for all workers')
+    parser.add_argument('--global-end-idx', type=int,
+                        default=int(os.environ.get('GLOBAL_END_IDX', 0)) or None,
+                        help='Global ending index for all workers')
     args = parser.parse_args()
 
     # Configure logging
@@ -506,7 +586,12 @@ async def main():
         chunk_overlap=args.chunk_overlap,
         model_name=args.model_name,
         dataset_name=args.dataset_name,
-        dataset_config=args.dataset_config
+        dataset_config=args.dataset_config,
+        partition_method=args.partition_method,
+        worker_rank=args.worker_rank,
+        total_workers=args.total_workers,
+        global_start_idx=args.global_start_idx,
+        global_end_idx=args.global_end_idx
     )
 
     # Run processing

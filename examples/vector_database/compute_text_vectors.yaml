@@ -3,9 +3,12 @@ name: compute-text-vectors
 workdir: .
 
 resources:
+  cpus: 4
   accelerators: 
     L4: 1
-  memory: 32+
+  cloud: aws
+  # region: ap-northeast-2
+  # disk_tier: best
   any_of:
     - use_spot: true
     - use_spot: false
@@ -16,7 +19,7 @@ envs:
   MODEL_NAME: "Alibaba-NLP/gte-Qwen2-7B-instruct"
   DATASET_NAME: "McAuley-Lab/Amazon-Reviews-2023"
   DATASET_CONFIG: "raw_review_Books"
-  EMBEDDINGS_BUCKET_NAME: sky-text-embeddings-multiple-cluster
+  EMBEDDINGS_BUCKET_NAME: sky-text-embeddings-multi-cluster-final-2
   WORKER_ID: ''
 
 file_mounts:

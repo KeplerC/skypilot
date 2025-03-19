@@ -1,0 +1,159 @@
+I 03-17 18:32:04 controller.py:59] DAG:
+I 03-17 18:32:04 controller.py:59] [Task<name=compute-text-vectors>(run='# Initialize and dow...')
+I 03-17 18:32:04 controller.py:59]   resources: AWS(cpus=4, {'L4': 1}, region=ap-northeast-2)]
+I 03-17 18:32:04 controller.py:195] Submitted managed job 19 (task: 0, name: 'compute-text-vectors'); SKYPILOT_TASK_ID: sky-managed-2025-03-17-18-32-04-710445_compute-text-vectors_19-0
+I 03-17 18:32:04 controller.py:199] Started monitoring.
+I 03-17 18:32:04 state.py:451] Launching the spot cluster...
+I 03-17 18:32:06 storage.py:1058] Storage type StoreType.S3 already exists.
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 18:32:06 optimizer.py:749] [1mEstimated cost: [0m$1.0 / hour
+I 03-17 18:32:06 optimizer.py:749] 
+I 03-17 18:32:06 optimizer.py:884] Considered resources (1 node):
+I 03-17 18:32:06 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:32:06 optimizer.py:952]  CLOUD   INSTANCE    vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE      COST ($)   CHOSEN   
+I 03-17 18:32:06 optimizer.py:952] -------------------------------------------------------------------------------------------
+I 03-17 18:32:06 optimizer.py:952]  AWS     g6.xlarge   4       16        L4:1           ap-northeast-2   0.99       [32m   ✔[0m     
+I 03-17 18:32:06 optimizer.py:952] -------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:32:07 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a,ap-northeast-2d).
+<sky-payload>"<rich_update>[bold cyan]Launching - Checking instance status[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching - Waiting for SSH access[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 18:32:40 provisioner.py:451] [2m└── [0m[2mInstance is up.[0m
+<sky-payload>"<rich_update>[bold cyan]Preparing SkyPilot runtime (1/3 - initializing)[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Preparing SkyPilot runtime (2/3 - dependencies)[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Preparing SkyPilot runtime (3/3 - runtime)[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching - Checking instance status[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:33:03 provisioner.py:632] [0m[32m✓ Cluster launched: compute-text-vectors-19.[0m  [2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+I 03-17 18:33:03 execution.py:332] [0m⚙︎ Syncing files.
+<sky-payload>"<rich_init>[bold cyan]Syncing files[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Syncing files[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Syncing files[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Syncing file mounts[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/file_mounts.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:33:04 backend_utils.py:1315]   [2mSyncing (to 1 node): s3://skypilot-filemounts-root-726f1974-70na8p1i/job-70na8p1i/workdir -> ~/sky_workdir[0m
+I 03-17 18:33:07 cloud_vm_ray_backend.py:4801] [0m[32m✓ Synced file_mounts.[0m  [2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/file_mounts.log[0m
+<sky-payload>"<rich_update>[bold cyan]Mounting 1 storage[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/storage_mounts.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 18:33:07 backend_utils.py:1315]   [2mMounting (to 1 node): s3://sky-text-embeddings-single-cluster-final -> /output[0m
+I 03-17 18:33:10 cloud_vm_ray_backend.py:4892] [0m[32m✓ Storage mounted.[0m  [2mView logs: sky api logs -l sky-2025-03-17-18-32-06-821283/storage_mounts.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Running setup[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Running setup[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Running setup[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_stop></rich_stop>"</sky-payload>
+I 03-17 18:33:10 cloud_vm_ray_backend.py:3357] [0m[32m✓ Setup detached.[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Submitting job[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Submitting job[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Submitting job[/]</rich_start>"</sky-payload>
+I 03-17 18:33:12 cloud_vm_ray_backend.py:3460] [0m⚙︎ Job submitted, ID: 1
+<sky-payload>"<rich_stop></rich_stop>"</sky-payload>
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 18:33:12 recovery_strategy.py:289] Managed job cluster launched.
+I 03-17 18:33:15 utils.py:131] === Checking the job status... ===
+I 03-17 18:33:16 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 18:33:16 utils.py:140] ==================================
+I 03-17 18:33:17 state.py:471] Job started.
+I 03-17 18:33:37 utils.py:131] === Checking the job status... ===
+I 03-17 18:33:38 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 18:33:38 utils.py:140] ==================================
+I 03-17 18:33:58 utils.py:131] === Checking the job status... ===
+I 03-17 18:33:58 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 18:33:58 utils.py:140] ==================================
+I 03-17 18:34:19 utils.py:131] === Checking the job status... ===
+I 03-17 18:34:19 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 18:34:19 utils.py:140] ==================================
+I 03-17 18:34:39 utils.py:131] === Checking the job status... ===
+I 03-17 18:34:40 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 18:34:40 utils.py:140] ==================================
+I 03-17 18:35:00 utils.py:131] === Checking the job status... ===
+I 03-17 18:35:01 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 18:35:01 utils.py:140] ==================================
+I 03-17 18:35:21 utils.py:131] === Checking the job status... ===
+I 03-17 18:35:21 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 18:35:21 utils.py:140] ==================================
+I 03-17 18:35:41 utils.py:131] === Checking the job status... ===
+I 03-17 18:35:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:35:42 utils.py:140] ==================================
+I 03-17 18:36:02 utils.py:131] === Checking the job status... ===
+I 03-17 18:36:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:36:03 utils.py:140] ==================================
+I 03-17 18:36:23 utils.py:131] === Checking the job status... ===
+I 03-17 18:36:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:36:24 utils.py:140] ==================================
+I 03-17 18:36:44 utils.py:131] === Checking the job status... ===
+I 03-17 18:36:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:36:45 utils.py:140] ==================================
+I 03-17 18:37:05 utils.py:131] === Checking the job status... ===
+I 03-17 18:37:05 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:37:05 utils.py:140] ==================================
+I 03-17 18:37:25 utils.py:131] === Checking the job status... ===
+I 03-17 18:37:26 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:37:26 utils.py:140] ==================================
+I 03-17 18:37:46 utils.py:131] === Checking the job status... ===
+I 03-17 18:37:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:37:47 utils.py:140] ==================================
+I 03-17 18:38:07 utils.py:131] === Checking the job status... ===
+I 03-17 18:38:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:38:08 utils.py:140] ==================================
+I 03-17 18:38:28 utils.py:131] === Checking the job status... ===
+I 03-17 18:38:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:38:29 utils.py:140] ==================================
+I 03-17 18:38:49 utils.py:131] === Checking the job status... ===
+I 03-17 18:38:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:38:50 utils.py:140] ==================================
+I 03-17 18:39:10 utils.py:131] === Checking the job status... ===
+I 03-17 18:39:12 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:39:12 utils.py:140] ==================================
+I 03-17 18:39:32 utils.py:131] === Checking the job status... ===
+I 03-17 18:39:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:39:34 utils.py:140] ==================================
+I 03-17 18:39:54 utils.py:131] === Checking the job status... ===
+I 03-17 18:39:57 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:39:57 utils.py:140] ==================================
+I 03-17 18:40:17 utils.py:131] === Checking the job status... ===
+I 03-17 18:40:17 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:40:17 utils.py:140] ==================================
+I 03-17 18:40:37 utils.py:131] === Checking the job status... ===
+I 03-17 18:40:38 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:40:38 utils.py:140] ==================================
+I 03-17 18:40:58 utils.py:131] === Checking the job status... ===
+I 03-17 18:40:59 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:40:59 utils.py:140] ==================================
+I 03-17 18:41:19 utils.py:131] === Checking the job status... ===
+I 03-17 18:41:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:41:19 utils.py:140] ==================================
+I 03-17 18:41:39 utils.py:131] === Checking the job status... ===
+I 03-17 18:41:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:41:40 utils.py:140] ==================================
+I 03-17 18:42:00 utils.py:131] === Checking the job status... ===
+I 03-17 18:42:01 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 18:42:01 utils.py:140] ==================================
+I 03-17 18:42:21 utils.py:131] === Checking the job status... ===
+I 03-17 18:42:21 utils.py:137] Job status: JobStatus.SUCCEEDED
+I 03-17 18:42:21 utils.py:140] ==================================
+I 03-17 18:42:22 state.py:561] Job succeeded.
+I 03-17 18:42:22 controller.py:238] Managed job 19 (task: 0) SUCCEEDED. Cleaning up the cluster compute-text-vectors-19.
+E 03-17 18:42:23 controller_utils.py:376] Failed to find the logs for the user program at ~/sky_logs/managed_jobs/sky-2025-03-17-18-32-06-821283/run.log.
+I 03-17 18:42:23 controller.py:117] 
+I 03-17 18:42:23 controller.py:117] == End of logs (ID: 19) ==
+I 03-17 18:42:29 state.py:656] Cancellation skipped, job is already terminal
+I 03-17 18:42:29 state.py:677] Cancellation skipped, job is not CANCELLING
+I 03-17 18:42:30 controller.py:552] Killing controller process 20309.
+I 03-17 18:42:30 controller.py:560] Controller process 20309 killed.
+I 03-17 18:42:30 controller.py:562] Cleaning up any cluster for job 19.
+I 03-17 18:42:31 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-70na8p1i
+<sky-payload>"<rich_init>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-70na8p1i[/][/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-70na8p1i[/][/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-70na8p1i[/][/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+I 03-17 18:42:36 storage.py:1505] [32mDeleted S3 bucket skypilot-filemounts-root-726f1974-70na8p1i.[0m
+I 03-17 18:42:36 controller.py:571] Cluster of managed job 19 has been cleaned up.

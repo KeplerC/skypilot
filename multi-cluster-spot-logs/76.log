@@ -1,0 +1,1378 @@
+I 03-17 21:16:51 controller.py:59] DAG:
+I 03-17 21:16:51 controller.py:59] [Task<name=compute-text-vectors>(run='# Initialize and dow...')
+I 03-17 21:16:51 controller.py:59]   resources: {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}]
+I 03-17 21:16:51 controller.py:195] Submitted managed job 76 (task: 0, name: 'compute-text-vectors'); SKYPILOT_TASK_ID: sky-managed-2025-03-17-21-16-51-068145_compute-text-vectors_76-0
+I 03-17 21:16:51 controller.py:199] Started monitoring.
+I 03-17 21:16:51 state.py:451] Launching the spot cluster...
+I 03-17 21:16:51 storage.py:1058] Storage type StoreType.S3 already exists.
+<sky-payload>"<rich_init>[bold cyan]Optimizing[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Optimizing[/]</rich_start>"</sky-payload>
+I 03-17 21:16:52 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:16:52 optimizer.py:749] [1mEstimated cost: [0m$0.2 / hour
+I 03-17 21:16:52 optimizer.py:749] 
+I 03-17 21:16:52 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:16:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:16:52 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:16:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:16:52 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           ap-south-1b   0.22       [32m   ✔[0m     
+I 03-17 21:16:52 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:16:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Launching[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:16:52 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-south-1[0m (ap-south-1b).
+[2mW 03-17 21:22:10 instance.py:243] create_instances: Attempt failed with An error occurred (MaxSpotInstanceCountExceeded) when calling the RunInstances operation: Max spot instance count exceeded[0m
+W 03-17 21:22:12 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in ap-south-1b for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:22:12 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:22:12 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:22:12 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:22:12 optimizer.py:749] [1mEstimated cost: [0m$0.2 / hour
+I 03-17 21:22:12 optimizer.py:749] 
+I 03-17 21:22:12 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:22:12 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:22:12 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:22:12 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:22:12 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           ap-south-1a   0.25       [32m   ✔[0m     
+I 03-17 21:22:12 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:22:12 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:22:12 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-south-1[0m (ap-south-1a).
+W 03-17 21:31:56 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in ap-south-1a for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:31:56 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:31:56 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:31:56 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:31:56 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:31:56 optimizer.py:749] 
+I 03-17 21:31:56 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:31:56 optimizer.py:952] --------------------------------------------------------------------------------------------------
+I 03-17 21:31:56 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE       COST ($)   CHOSEN   
+I 03-17 21:31:56 optimizer.py:952] --------------------------------------------------------------------------------------------------
+I 03-17 21:31:56 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           ap-northeast-2d   0.25       [32m   ✔[0m     
+I 03-17 21:31:56 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1         0.80                
+I 03-17 21:31:56 optimizer.py:952] --------------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:31:56 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2d).
+[2mW 03-17 21:32:14 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): There is no Spot capacity available that matches your request.[0m
+W 03-17 21:32:15 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in ap-northeast-2d for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:32:15 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:32:15 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:32:16 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:32:16 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:32:16 optimizer.py:749] 
+I 03-17 21:32:16 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:32:16 optimizer.py:952] --------------------------------------------------------------------------------------------------
+I 03-17 21:32:16 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE       COST ($)   CHOSEN   
+I 03-17 21:32:16 optimizer.py:952] --------------------------------------------------------------------------------------------------
+I 03-17 21:32:16 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           ap-northeast-2a   0.27       [32m   ✔[0m     
+I 03-17 21:32:16 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1         0.80                
+I 03-17 21:32:16 optimizer.py:952] --------------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:32:16 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ap-northeast-2[0m (ap-northeast-2a).
+[2mW 03-17 21:35:23 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (ap-northeast-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing ap-northeast-2d.[0m
+W 03-17 21:35:24 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in ap-northeast-2a for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:35:24 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:35:24 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:35:24 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:35:24 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:35:24 optimizer.py:749] 
+I 03-17 21:35:24 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:35:24 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:35:24 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:35:24 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:35:24 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           us-east-1b    0.30       [32m   ✔[0m     
+I 03-17 21:35:24 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:35:24 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:35:24 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS us-east-1[0m (us-east-1b).
+[2mW 03-17 21:35:30 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (us-east-1b). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing us-east-1a, us-east-1c, us-east-1d.[0m
+W 03-17 21:35:31 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in us-east-1b for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:35:31 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:35:31 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:35:31 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:35:31 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:35:31 optimizer.py:749] 
+I 03-17 21:35:31 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:35:31 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:35:31 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:35:31 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:35:31 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           us-east-2c    0.31       [32m   ✔[0m     
+I 03-17 21:35:31 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:35:31 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:35:31 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS us-east-2[0m (us-east-2c).
+[2mW 03-17 21:35:51 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (us-east-2c). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing us-east-2a, us-east-2b.[0m
+W 03-17 21:35:51 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in us-east-2c for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:35:51 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:35:51 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:35:52 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:35:52 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:35:52 optimizer.py:749] 
+I 03-17 21:35:52 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:35:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:35:52 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:35:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:35:52 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           us-east-2b    0.32       [32m   ✔[0m     
+I 03-17 21:35:52 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:35:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:35:52 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS us-east-2[0m (us-east-2b).
+[2mW 03-17 21:36:04 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): There is no Spot capacity available that matches your request.[0m
+W 03-17 21:36:04 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in us-east-2b for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:36:04 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:36:04 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:36:04 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:36:04 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:36:04 optimizer.py:749] 
+I 03-17 21:36:04 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:36:04 optimizer.py:952] ------------------------------------------------------------------------------------------------
+I 03-17 21:36:04 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE     COST ($)   CHOSEN   
+I 03-17 21:36:04 optimizer.py:952] ------------------------------------------------------------------------------------------------
+I 03-17 21:36:04 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           ca-central-1a   0.33       [32m   ✔[0m     
+I 03-17 21:36:04 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1       0.80                
+I 03-17 21:36:04 optimizer.py:952] ------------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:36:05 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ca-central-1[0m (ca-central-1a).
+[2mW 03-17 21:36:10 instance.py:243] create_instances: Attempt failed with An error occurred (MaxSpotInstanceCountExceeded) when calling the RunInstances operation: Max spot instance count exceeded[0m
+W 03-17 21:36:10 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in ca-central-1a for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:36:10 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:36:10 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:36:10 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:36:10 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:36:10 optimizer.py:749] 
+I 03-17 21:36:10 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:36:10 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:10 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:36:10 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:10 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           us-east-1c    0.34       [32m   ✔[0m     
+I 03-17 21:36:10 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:36:10 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:36:10 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS us-east-1[0m (us-east-1c).
+[2mE 03-17 21:36:12 config.py:46] SKYPILOT_ERROR_NO_NODES_LAUNCHED: No usable subnets matching availability zone ['us-east-1c'] found. Choose a different availability zone or try manually creating an instance in your specified region to populate the list of subnets and trying this again. If you have set `use_internal_ips`, check that this zone has a subnet that (1) has the substring 'private' in its name tag and (2) does not assign public IPs (`map_public_ip_on_launch` is False).[0m
+W 03-17 21:36:12 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in us-east-1c for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:36:12 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:36:12 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:36:12 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:36:12 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:36:12 optimizer.py:749] 
+I 03-17 21:36:12 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:36:12 optimizer.py:952] ------------------------------------------------------------------------------------------------
+I 03-17 21:36:12 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE     COST ($)   CHOSEN   
+I 03-17 21:36:12 optimizer.py:952] ------------------------------------------------------------------------------------------------
+I 03-17 21:36:12 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           ca-central-1b   0.34       [32m   ✔[0m     
+I 03-17 21:36:12 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1       0.80                
+I 03-17 21:36:12 optimizer.py:952] ------------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:36:12 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS ca-central-1[0m (ca-central-1b).
+[2mW 03-17 21:36:21 instance.py:243] create_instances: Attempt failed with An error occurred (MaxSpotInstanceCountExceeded) when calling the RunInstances operation: Max spot instance count exceeded[0m
+W 03-17 21:36:22 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in ca-central-1b for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:36:22 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:36:22 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:36:22 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:36:22 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:36:22 optimizer.py:749] 
+I 03-17 21:36:22 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:36:22 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:22 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:36:22 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:22 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           eu-west-2a    0.34       [32m   ✔[0m     
+I 03-17 21:36:22 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:36:22 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:36:22 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS eu-west-2[0m (eu-west-2a).
+[2mW 03-17 21:36:30 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): We currently do not have sufficient g6.xlarge capacity in the Availability Zone you requested (eu-west-2a). Our system will be working on provisioning additional capacity. You can currently get g6.xlarge capacity by not specifying an Availability Zone in your request or choosing eu-west-2b.[0m
+W 03-17 21:36:30 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in eu-west-2a for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:36:30 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:36:30 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:36:31 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:36:31 optimizer.py:749] [1mEstimated cost: [0m$0.3 / hour
+I 03-17 21:36:31 optimizer.py:749] 
+I 03-17 21:36:31 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:36:31 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:31 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:36:31 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:31 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           eu-west-3c    0.35       [32m   ✔[0m     
+I 03-17 21:36:31 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:36:31 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:36:31 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS eu-west-3[0m (eu-west-3c).
+[2mW 03-17 21:36:39 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): There is no Spot capacity available that matches your request.[0m
+W 03-17 21:36:40 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in eu-west-3c for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:36:40 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:36:40 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:36:40 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:36:40 optimizer.py:749] [1mEstimated cost: [0m$0.4 / hour
+I 03-17 21:36:40 optimizer.py:749] 
+I 03-17 21:36:40 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:36:40 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:40 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:36:40 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:40 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           eu-north-1a   0.35       [32m   ✔[0m     
+I 03-17 21:36:40 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:36:40 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:36:40 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS eu-north-1[0m (eu-north-1a).
+[2mW 03-17 21:36:51 instance.py:243] create_instances: Attempt failed with An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation (reached max retries: 0): There is no Spot capacity available that matches your request.[0m
+W 03-17 21:36:52 cloud_vm_ray_backend.py:2061] sky.exceptions.ResourcesUnavailableError: Failed to acquire resources in eu-north-1a for {AWS([Spot], cpus=4, {'L4': 1}), AWS(cpus=4, {'L4': 1})}. 
+W 03-17 21:36:52 cloud_vm_ray_backend.py:2097] 
+W 03-17 21:36:52 cloud_vm_ray_backend.py:2097] [0m[33m↺[0m Trying other potential resources.
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Optimizing[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:36:52 optimizer.py:736] [1mTarget:[0m minimizing cost
+I 03-17 21:36:52 optimizer.py:749] [1mEstimated cost: [0m$0.4 / hour
+I 03-17 21:36:52 optimizer.py:749] 
+I 03-17 21:36:52 optimizer.py:884] Considered resources (1 node):
+I 03-17 21:36:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:52 optimizer.py:952]  CLOUD   INSTANCE          vCPUs   Mem(GB)   ACCELERATORS   REGION/ZONE   COST ($)   CHOSEN   
+I 03-17 21:36:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+I 03-17 21:36:52 optimizer.py:952]  AWS     g6.xlarge[Spot]   4       16        L4:1           eu-west-2b    0.36       [32m   ✔[0m     
+I 03-17 21:36:52 optimizer.py:952]  AWS     g6.xlarge         4       16        L4:1           us-east-1     0.80                
+I 03-17 21:36:52 optimizer.py:952] ----------------------------------------------------------------------------------------------
+<sky-payload>"<rich_update>[bold cyan]Looking for resources[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:36:52 cloud_vm_ray_backend.py:1520] [0m⚙︎ Launching on AWS eu-west-2[0m (eu-west-2b).
+<sky-payload>"<rich_update>[bold cyan]Launching - Checking instance status[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching - Waiting for SSH access[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Launching[/]</rich_start>"</sky-payload>
+I 03-17 21:37:17 provisioner.py:451] [2m└── [0m[2mInstance is up.[0m
+<sky-payload>"<rich_update>[bold cyan]Preparing SkyPilot runtime (1/3 - initializing)[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Preparing SkyPilot runtime (2/3 - dependencies)[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Preparing SkyPilot runtime (3/3 - runtime)[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Launching - Checking instance status[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:37:48 provisioner.py:632] [0m[32m✓ Cluster launched: compute-text-vectors-76.[0m  [2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/provision.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+I 03-17 21:37:48 execution.py:332] [0m⚙︎ Syncing files.
+<sky-payload>"<rich_init>[bold cyan]Syncing files[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Syncing files[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Syncing files[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Syncing file mounts[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/file_mounts.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:37:48 backend_utils.py:1315]   [2mSyncing (to 1 node): s3://skypilot-filemounts-root-726f1974-8pphi2ek/job-8pphi2ek/workdir -> ~/sky_workdir[0m
+I 03-17 21:37:52 cloud_vm_ray_backend.py:4801] [0m[32m✓ Synced file_mounts.[0m  [2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/file_mounts.log[0m
+<sky-payload>"<rich_update>[bold cyan]Mounting 1 storage[/]  \u001b[2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/storage_mounts.log\u001b[0m</rich_update>"</sky-payload>
+I 03-17 21:37:52 backend_utils.py:1315]   [2mMounting (to 1 node): s3://sky-text-embeddings-multi-cluster-final-2 -> /output[0m
+I 03-17 21:37:54 cloud_vm_ray_backend.py:4892] [0m[32m✓ Storage mounted.[0m  [2mView logs: sky api logs -l sky-2025-03-17-21-16-51-694801/storage_mounts.log[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Running setup[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Running setup[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Running setup[/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_stop></rich_stop>"</sky-payload>
+I 03-17 21:37:56 cloud_vm_ray_backend.py:3357] [0m[32m✓ Setup detached.[0m
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+<sky-payload>"<rich_init>[bold cyan]Submitting job[/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Submitting job[/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Submitting job[/]</rich_start>"</sky-payload>
+I 03-17 21:37:57 cloud_vm_ray_backend.py:3546] Multiple resources are specified for the task, using: AWS([Spot], cpus=4, {'L4': 1})
+I 03-17 21:37:58 cloud_vm_ray_backend.py:3460] [0m⚙︎ Job submitted, ID: 1
+<sky-payload>"<rich_stop></rich_stop>"</sky-payload>
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+
+[?25hI 03-17 21:37:58 recovery_strategy.py:289] Managed job cluster launched.
+I 03-17 21:38:02 utils.py:131] === Checking the job status... ===
+I 03-17 21:38:02 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 21:38:02 utils.py:140] ==================================
+I 03-17 21:38:03 state.py:471] Job started.
+I 03-17 21:38:23 utils.py:131] === Checking the job status... ===
+I 03-17 21:38:24 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 21:38:24 utils.py:140] ==================================
+I 03-17 21:38:44 utils.py:131] === Checking the job status... ===
+I 03-17 21:38:45 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 21:38:45 utils.py:140] ==================================
+I 03-17 21:39:05 utils.py:131] === Checking the job status... ===
+I 03-17 21:39:06 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 21:39:06 utils.py:140] ==================================
+I 03-17 21:39:26 utils.py:131] === Checking the job status... ===
+I 03-17 21:39:27 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 21:39:27 utils.py:140] ==================================
+I 03-17 21:39:47 utils.py:131] === Checking the job status... ===
+I 03-17 21:39:47 utils.py:137] Job status: JobStatus.SETTING_UP
+I 03-17 21:39:47 utils.py:140] ==================================
+I 03-17 21:40:07 utils.py:131] === Checking the job status... ===
+I 03-17 21:40:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:40:08 utils.py:140] ==================================
+I 03-17 21:40:28 utils.py:131] === Checking the job status... ===
+I 03-17 21:40:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:40:29 utils.py:140] ==================================
+I 03-17 21:40:49 utils.py:131] === Checking the job status... ===
+I 03-17 21:40:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:40:50 utils.py:140] ==================================
+I 03-17 21:41:10 utils.py:131] === Checking the job status... ===
+I 03-17 21:41:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:41:11 utils.py:140] ==================================
+I 03-17 21:41:31 utils.py:131] === Checking the job status... ===
+I 03-17 21:41:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:41:32 utils.py:140] ==================================
+I 03-17 21:41:52 utils.py:131] === Checking the job status... ===
+I 03-17 21:41:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:41:53 utils.py:140] ==================================
+I 03-17 21:42:13 utils.py:131] === Checking the job status... ===
+I 03-17 21:42:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:42:14 utils.py:140] ==================================
+I 03-17 21:42:34 utils.py:131] === Checking the job status... ===
+I 03-17 21:42:35 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:42:35 utils.py:140] ==================================
+I 03-17 21:42:55 utils.py:131] === Checking the job status... ===
+I 03-17 21:42:56 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:42:56 utils.py:140] ==================================
+I 03-17 21:43:16 utils.py:131] === Checking the job status... ===
+I 03-17 21:43:17 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:43:17 utils.py:140] ==================================
+I 03-17 21:43:37 utils.py:131] === Checking the job status... ===
+I 03-17 21:43:38 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:43:38 utils.py:140] ==================================
+I 03-17 21:43:58 utils.py:131] === Checking the job status... ===
+I 03-17 21:44:02 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:44:02 utils.py:140] ==================================
+I 03-17 21:44:22 utils.py:131] === Checking the job status... ===
+I 03-17 21:44:23 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:44:23 utils.py:140] ==================================
+I 03-17 21:44:43 utils.py:131] === Checking the job status... ===
+I 03-17 21:44:46 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:44:46 utils.py:140] ==================================
+I 03-17 21:45:07 utils.py:131] === Checking the job status... ===
+I 03-17 21:45:07 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:45:07 utils.py:140] ==================================
+I 03-17 21:45:28 utils.py:131] === Checking the job status... ===
+I 03-17 21:45:28 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:45:28 utils.py:140] ==================================
+I 03-17 21:45:48 utils.py:131] === Checking the job status... ===
+I 03-17 21:45:49 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:45:49 utils.py:140] ==================================
+I 03-17 21:46:09 utils.py:131] === Checking the job status... ===
+I 03-17 21:46:10 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:46:10 utils.py:140] ==================================
+I 03-17 21:46:30 utils.py:131] === Checking the job status... ===
+I 03-17 21:46:31 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:46:31 utils.py:140] ==================================
+I 03-17 21:46:51 utils.py:131] === Checking the job status... ===
+I 03-17 21:46:52 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:46:52 utils.py:140] ==================================
+I 03-17 21:47:12 utils.py:131] === Checking the job status... ===
+I 03-17 21:47:13 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:47:13 utils.py:140] ==================================
+I 03-17 21:47:33 utils.py:131] === Checking the job status... ===
+I 03-17 21:47:33 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:47:33 utils.py:140] ==================================
+I 03-17 21:47:54 utils.py:131] === Checking the job status... ===
+I 03-17 21:47:54 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:47:54 utils.py:140] ==================================
+I 03-17 21:48:15 utils.py:131] === Checking the job status... ===
+I 03-17 21:48:15 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:48:15 utils.py:140] ==================================
+I 03-17 21:48:35 utils.py:131] === Checking the job status... ===
+I 03-17 21:48:36 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:48:36 utils.py:140] ==================================
+I 03-17 21:48:56 utils.py:131] === Checking the job status... ===
+I 03-17 21:48:57 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:48:57 utils.py:140] ==================================
+I 03-17 21:49:17 utils.py:131] === Checking the job status... ===
+I 03-17 21:49:18 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:49:18 utils.py:140] ==================================
+I 03-17 21:49:38 utils.py:131] === Checking the job status... ===
+I 03-17 21:49:39 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:49:39 utils.py:140] ==================================
+I 03-17 21:49:59 utils.py:131] === Checking the job status... ===
+I 03-17 21:50:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:50:00 utils.py:140] ==================================
+I 03-17 21:50:20 utils.py:131] === Checking the job status... ===
+I 03-17 21:50:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:50:21 utils.py:140] ==================================
+I 03-17 21:50:41 utils.py:131] === Checking the job status... ===
+I 03-17 21:50:41 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:50:41 utils.py:140] ==================================
+I 03-17 21:51:01 utils.py:131] === Checking the job status... ===
+I 03-17 21:51:02 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:51:02 utils.py:140] ==================================
+I 03-17 21:51:22 utils.py:131] === Checking the job status... ===
+I 03-17 21:51:23 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:51:23 utils.py:140] ==================================
+I 03-17 21:51:43 utils.py:131] === Checking the job status... ===
+I 03-17 21:51:44 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:51:44 utils.py:140] ==================================
+I 03-17 21:52:04 utils.py:131] === Checking the job status... ===
+I 03-17 21:52:05 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:52:05 utils.py:140] ==================================
+I 03-17 21:52:25 utils.py:131] === Checking the job status... ===
+I 03-17 21:52:26 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:52:26 utils.py:140] ==================================
+I 03-17 21:52:46 utils.py:131] === Checking the job status... ===
+I 03-17 21:52:46 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:52:46 utils.py:140] ==================================
+I 03-17 21:53:07 utils.py:131] === Checking the job status... ===
+I 03-17 21:53:07 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:53:07 utils.py:140] ==================================
+I 03-17 21:53:27 utils.py:131] === Checking the job status... ===
+I 03-17 21:53:28 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:53:28 utils.py:140] ==================================
+I 03-17 21:53:48 utils.py:131] === Checking the job status... ===
+I 03-17 21:53:49 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:53:49 utils.py:140] ==================================
+I 03-17 21:54:09 utils.py:131] === Checking the job status... ===
+I 03-17 21:54:10 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:54:10 utils.py:140] ==================================
+I 03-17 21:54:30 utils.py:131] === Checking the job status... ===
+I 03-17 21:54:31 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:54:31 utils.py:140] ==================================
+I 03-17 21:54:51 utils.py:131] === Checking the job status... ===
+I 03-17 21:54:52 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:54:52 utils.py:140] ==================================
+I 03-17 21:55:12 utils.py:131] === Checking the job status... ===
+I 03-17 21:55:13 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:55:13 utils.py:140] ==================================
+I 03-17 21:55:33 utils.py:131] === Checking the job status... ===
+I 03-17 21:55:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:55:34 utils.py:140] ==================================
+I 03-17 21:55:54 utils.py:131] === Checking the job status... ===
+I 03-17 21:55:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:55:55 utils.py:140] ==================================
+I 03-17 21:56:15 utils.py:131] === Checking the job status... ===
+I 03-17 21:56:15 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:56:15 utils.py:140] ==================================
+I 03-17 21:56:36 utils.py:131] === Checking the job status... ===
+I 03-17 21:56:36 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:56:36 utils.py:140] ==================================
+I 03-17 21:56:56 utils.py:131] === Checking the job status... ===
+I 03-17 21:56:57 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:56:57 utils.py:140] ==================================
+I 03-17 21:57:17 utils.py:131] === Checking the job status... ===
+I 03-17 21:57:18 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:57:18 utils.py:140] ==================================
+I 03-17 21:57:38 utils.py:131] === Checking the job status... ===
+I 03-17 21:57:39 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:57:39 utils.py:140] ==================================
+I 03-17 21:57:59 utils.py:131] === Checking the job status... ===
+I 03-17 21:58:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:58:00 utils.py:140] ==================================
+I 03-17 21:58:20 utils.py:131] === Checking the job status... ===
+I 03-17 21:58:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:58:21 utils.py:140] ==================================
+I 03-17 21:58:41 utils.py:131] === Checking the job status... ===
+I 03-17 21:58:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:58:42 utils.py:140] ==================================
+I 03-17 21:59:02 utils.py:131] === Checking the job status... ===
+I 03-17 21:59:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:59:03 utils.py:140] ==================================
+I 03-17 21:59:23 utils.py:131] === Checking the job status... ===
+I 03-17 21:59:23 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:59:23 utils.py:140] ==================================
+I 03-17 21:59:44 utils.py:131] === Checking the job status... ===
+I 03-17 21:59:44 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 21:59:44 utils.py:140] ==================================
+I 03-17 22:00:04 utils.py:131] === Checking the job status... ===
+I 03-17 22:00:05 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:00:05 utils.py:140] ==================================
+I 03-17 22:00:25 utils.py:131] === Checking the job status... ===
+I 03-17 22:00:26 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:00:26 utils.py:140] ==================================
+I 03-17 22:00:46 utils.py:131] === Checking the job status... ===
+I 03-17 22:00:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:00:47 utils.py:140] ==================================
+I 03-17 22:01:07 utils.py:131] === Checking the job status... ===
+I 03-17 22:01:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:01:08 utils.py:140] ==================================
+I 03-17 22:01:28 utils.py:131] === Checking the job status... ===
+I 03-17 22:01:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:01:29 utils.py:140] ==================================
+I 03-17 22:01:49 utils.py:131] === Checking the job status... ===
+I 03-17 22:01:49 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:01:49 utils.py:140] ==================================
+I 03-17 22:02:10 utils.py:131] === Checking the job status... ===
+I 03-17 22:02:10 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:02:10 utils.py:140] ==================================
+I 03-17 22:02:30 utils.py:131] === Checking the job status... ===
+I 03-17 22:02:31 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:02:31 utils.py:140] ==================================
+I 03-17 22:02:51 utils.py:131] === Checking the job status... ===
+I 03-17 22:02:52 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:02:52 utils.py:140] ==================================
+I 03-17 22:03:12 utils.py:131] === Checking the job status... ===
+I 03-17 22:03:13 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:03:13 utils.py:140] ==================================
+I 03-17 22:03:33 utils.py:131] === Checking the job status... ===
+I 03-17 22:03:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:03:34 utils.py:140] ==================================
+I 03-17 22:03:54 utils.py:131] === Checking the job status... ===
+I 03-17 22:03:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:03:55 utils.py:140] ==================================
+I 03-17 22:04:15 utils.py:131] === Checking the job status... ===
+I 03-17 22:04:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:04:16 utils.py:140] ==================================
+I 03-17 22:04:36 utils.py:131] === Checking the job status... ===
+I 03-17 22:04:36 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:04:36 utils.py:140] ==================================
+I 03-17 22:04:57 utils.py:131] === Checking the job status... ===
+I 03-17 22:04:57 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:04:57 utils.py:140] ==================================
+I 03-17 22:05:17 utils.py:131] === Checking the job status... ===
+I 03-17 22:05:18 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:05:18 utils.py:140] ==================================
+I 03-17 22:05:38 utils.py:131] === Checking the job status... ===
+I 03-17 22:05:39 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:05:39 utils.py:140] ==================================
+I 03-17 22:05:59 utils.py:131] === Checking the job status... ===
+I 03-17 22:06:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:06:00 utils.py:140] ==================================
+I 03-17 22:06:20 utils.py:131] === Checking the job status... ===
+I 03-17 22:06:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:06:21 utils.py:140] ==================================
+I 03-17 22:06:41 utils.py:131] === Checking the job status... ===
+I 03-17 22:06:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:06:42 utils.py:140] ==================================
+I 03-17 22:07:02 utils.py:131] === Checking the job status... ===
+I 03-17 22:07:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:07:03 utils.py:140] ==================================
+I 03-17 22:07:23 utils.py:131] === Checking the job status... ===
+I 03-17 22:07:23 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:07:23 utils.py:140] ==================================
+I 03-17 22:07:44 utils.py:131] === Checking the job status... ===
+I 03-17 22:07:44 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:07:44 utils.py:140] ==================================
+I 03-17 22:08:04 utils.py:131] === Checking the job status... ===
+I 03-17 22:08:05 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:08:05 utils.py:140] ==================================
+I 03-17 22:08:25 utils.py:131] === Checking the job status... ===
+I 03-17 22:08:26 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:08:26 utils.py:140] ==================================
+I 03-17 22:08:46 utils.py:131] === Checking the job status... ===
+I 03-17 22:08:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:08:47 utils.py:140] ==================================
+I 03-17 22:09:07 utils.py:131] === Checking the job status... ===
+I 03-17 22:09:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:09:08 utils.py:140] ==================================
+I 03-17 22:09:28 utils.py:131] === Checking the job status... ===
+I 03-17 22:09:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:09:29 utils.py:140] ==================================
+I 03-17 22:09:49 utils.py:131] === Checking the job status... ===
+I 03-17 22:09:49 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:09:49 utils.py:140] ==================================
+I 03-17 22:10:10 utils.py:131] === Checking the job status... ===
+I 03-17 22:10:10 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:10:10 utils.py:140] ==================================
+I 03-17 22:10:30 utils.py:131] === Checking the job status... ===
+I 03-17 22:10:31 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:10:31 utils.py:140] ==================================
+I 03-17 22:10:51 utils.py:131] === Checking the job status... ===
+I 03-17 22:10:52 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:10:52 utils.py:140] ==================================
+I 03-17 22:11:12 utils.py:131] === Checking the job status... ===
+I 03-17 22:11:13 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:11:13 utils.py:140] ==================================
+I 03-17 22:11:33 utils.py:131] === Checking the job status... ===
+I 03-17 22:11:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:11:34 utils.py:140] ==================================
+I 03-17 22:11:54 utils.py:131] === Checking the job status... ===
+I 03-17 22:11:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:11:55 utils.py:140] ==================================
+I 03-17 22:12:15 utils.py:131] === Checking the job status... ===
+I 03-17 22:12:15 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:12:15 utils.py:140] ==================================
+I 03-17 22:12:36 utils.py:131] === Checking the job status... ===
+I 03-17 22:12:36 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:12:36 utils.py:140] ==================================
+I 03-17 22:12:56 utils.py:131] === Checking the job status... ===
+I 03-17 22:12:57 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:12:57 utils.py:140] ==================================
+I 03-17 22:13:17 utils.py:131] === Checking the job status... ===
+I 03-17 22:13:18 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:13:18 utils.py:140] ==================================
+I 03-17 22:13:38 utils.py:131] === Checking the job status... ===
+I 03-17 22:13:39 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:13:39 utils.py:140] ==================================
+I 03-17 22:13:59 utils.py:131] === Checking the job status... ===
+I 03-17 22:14:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:14:00 utils.py:140] ==================================
+I 03-17 22:14:20 utils.py:131] === Checking the job status... ===
+I 03-17 22:14:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:14:21 utils.py:140] ==================================
+I 03-17 22:14:41 utils.py:131] === Checking the job status... ===
+I 03-17 22:14:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:14:42 utils.py:140] ==================================
+I 03-17 22:15:02 utils.py:131] === Checking the job status... ===
+I 03-17 22:15:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:15:03 utils.py:140] ==================================
+I 03-17 22:15:23 utils.py:131] === Checking the job status... ===
+I 03-17 22:15:23 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:15:23 utils.py:140] ==================================
+I 03-17 22:15:44 utils.py:131] === Checking the job status... ===
+I 03-17 22:15:44 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:15:44 utils.py:140] ==================================
+I 03-17 22:16:04 utils.py:131] === Checking the job status... ===
+I 03-17 22:16:05 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:16:05 utils.py:140] ==================================
+I 03-17 22:16:25 utils.py:131] === Checking the job status... ===
+I 03-17 22:16:26 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:16:26 utils.py:140] ==================================
+I 03-17 22:16:46 utils.py:131] === Checking the job status... ===
+I 03-17 22:16:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:16:47 utils.py:140] ==================================
+I 03-17 22:17:07 utils.py:131] === Checking the job status... ===
+I 03-17 22:17:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:17:08 utils.py:140] ==================================
+I 03-17 22:17:28 utils.py:131] === Checking the job status... ===
+I 03-17 22:17:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:17:29 utils.py:140] ==================================
+I 03-17 22:17:49 utils.py:131] === Checking the job status... ===
+I 03-17 22:17:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:17:50 utils.py:140] ==================================
+I 03-17 22:18:10 utils.py:131] === Checking the job status... ===
+I 03-17 22:18:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:18:11 utils.py:140] ==================================
+I 03-17 22:18:31 utils.py:131] === Checking the job status... ===
+I 03-17 22:18:31 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:18:31 utils.py:140] ==================================
+I 03-17 22:18:52 utils.py:131] === Checking the job status... ===
+I 03-17 22:18:52 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:18:52 utils.py:140] ==================================
+I 03-17 22:19:12 utils.py:131] === Checking the job status... ===
+I 03-17 22:19:13 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:19:13 utils.py:140] ==================================
+I 03-17 22:19:33 utils.py:131] === Checking the job status... ===
+I 03-17 22:19:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:19:34 utils.py:140] ==================================
+I 03-17 22:19:54 utils.py:131] === Checking the job status... ===
+I 03-17 22:19:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:19:55 utils.py:140] ==================================
+I 03-17 22:20:15 utils.py:131] === Checking the job status... ===
+I 03-17 22:20:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:20:16 utils.py:140] ==================================
+I 03-17 22:20:36 utils.py:131] === Checking the job status... ===
+I 03-17 22:20:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:20:37 utils.py:140] ==================================
+I 03-17 22:20:57 utils.py:131] === Checking the job status... ===
+I 03-17 22:20:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:20:58 utils.py:140] ==================================
+I 03-17 22:21:18 utils.py:131] === Checking the job status... ===
+I 03-17 22:21:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:21:19 utils.py:140] ==================================
+I 03-17 22:21:39 utils.py:131] === Checking the job status... ===
+I 03-17 22:21:39 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:21:39 utils.py:140] ==================================
+I 03-17 22:22:00 utils.py:131] === Checking the job status... ===
+I 03-17 22:22:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:22:00 utils.py:140] ==================================
+I 03-17 22:22:20 utils.py:131] === Checking the job status... ===
+I 03-17 22:22:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:22:21 utils.py:140] ==================================
+I 03-17 22:22:41 utils.py:131] === Checking the job status... ===
+I 03-17 22:22:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:22:42 utils.py:140] ==================================
+I 03-17 22:23:02 utils.py:131] === Checking the job status... ===
+I 03-17 22:23:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:23:03 utils.py:140] ==================================
+I 03-17 22:23:23 utils.py:131] === Checking the job status... ===
+I 03-17 22:23:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:23:24 utils.py:140] ==================================
+I 03-17 22:23:44 utils.py:131] === Checking the job status... ===
+I 03-17 22:23:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:23:45 utils.py:140] ==================================
+I 03-17 22:24:05 utils.py:131] === Checking the job status... ===
+I 03-17 22:24:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:24:06 utils.py:140] ==================================
+I 03-17 22:24:26 utils.py:131] === Checking the job status... ===
+I 03-17 22:24:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:24:27 utils.py:140] ==================================
+I 03-17 22:24:47 utils.py:131] === Checking the job status... ===
+I 03-17 22:24:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:24:47 utils.py:140] ==================================
+I 03-17 22:25:08 utils.py:131] === Checking the job status... ===
+I 03-17 22:25:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:25:08 utils.py:140] ==================================
+I 03-17 22:25:28 utils.py:131] === Checking the job status... ===
+I 03-17 22:25:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:25:29 utils.py:140] ==================================
+I 03-17 22:25:49 utils.py:131] === Checking the job status... ===
+I 03-17 22:25:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:25:50 utils.py:140] ==================================
+I 03-17 22:26:10 utils.py:131] === Checking the job status... ===
+I 03-17 22:26:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:26:11 utils.py:140] ==================================
+I 03-17 22:26:31 utils.py:131] === Checking the job status... ===
+I 03-17 22:26:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:26:32 utils.py:140] ==================================
+I 03-17 22:26:52 utils.py:131] === Checking the job status... ===
+I 03-17 22:26:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:26:53 utils.py:140] ==================================
+I 03-17 22:27:13 utils.py:131] === Checking the job status... ===
+I 03-17 22:27:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:27:14 utils.py:140] ==================================
+I 03-17 22:27:34 utils.py:131] === Checking the job status... ===
+I 03-17 22:27:35 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:27:35 utils.py:140] ==================================
+I 03-17 22:27:55 utils.py:131] === Checking the job status... ===
+I 03-17 22:27:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:27:55 utils.py:140] ==================================
+I 03-17 22:28:16 utils.py:131] === Checking the job status... ===
+I 03-17 22:28:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:28:16 utils.py:140] ==================================
+I 03-17 22:28:36 utils.py:131] === Checking the job status... ===
+I 03-17 22:28:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:28:37 utils.py:140] ==================================
+I 03-17 22:28:57 utils.py:131] === Checking the job status... ===
+I 03-17 22:28:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:28:58 utils.py:140] ==================================
+I 03-17 22:29:18 utils.py:131] === Checking the job status... ===
+I 03-17 22:29:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:29:19 utils.py:140] ==================================
+I 03-17 22:29:39 utils.py:131] === Checking the job status... ===
+I 03-17 22:29:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:29:40 utils.py:140] ==================================
+I 03-17 22:30:00 utils.py:131] === Checking the job status... ===
+I 03-17 22:30:01 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:30:01 utils.py:140] ==================================
+I 03-17 22:30:21 utils.py:131] === Checking the job status... ===
+I 03-17 22:30:22 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:30:22 utils.py:140] ==================================
+I 03-17 22:30:42 utils.py:131] === Checking the job status... ===
+I 03-17 22:30:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:30:42 utils.py:140] ==================================
+I 03-17 22:31:03 utils.py:131] === Checking the job status... ===
+I 03-17 22:31:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:31:03 utils.py:140] ==================================
+I 03-17 22:31:23 utils.py:131] === Checking the job status... ===
+I 03-17 22:31:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:31:24 utils.py:140] ==================================
+I 03-17 22:31:44 utils.py:131] === Checking the job status... ===
+I 03-17 22:31:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:31:45 utils.py:140] ==================================
+I 03-17 22:32:05 utils.py:131] === Checking the job status... ===
+I 03-17 22:32:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:32:06 utils.py:140] ==================================
+I 03-17 22:32:26 utils.py:131] === Checking the job status... ===
+I 03-17 22:32:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:32:27 utils.py:140] ==================================
+I 03-17 22:32:47 utils.py:131] === Checking the job status... ===
+I 03-17 22:32:48 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:32:48 utils.py:140] ==================================
+I 03-17 22:33:08 utils.py:131] === Checking the job status... ===
+I 03-17 22:33:09 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:33:09 utils.py:140] ==================================
+I 03-17 22:33:29 utils.py:131] === Checking the job status... ===
+I 03-17 22:33:30 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:33:30 utils.py:140] ==================================
+I 03-17 22:33:50 utils.py:131] === Checking the job status... ===
+I 03-17 22:33:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:33:50 utils.py:140] ==================================
+I 03-17 22:34:11 utils.py:131] === Checking the job status... ===
+I 03-17 22:34:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:34:11 utils.py:140] ==================================
+I 03-17 22:34:31 utils.py:131] === Checking the job status... ===
+I 03-17 22:34:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:34:32 utils.py:140] ==================================
+I 03-17 22:34:52 utils.py:131] === Checking the job status... ===
+I 03-17 22:34:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:34:53 utils.py:140] ==================================
+I 03-17 22:35:13 utils.py:131] === Checking the job status... ===
+I 03-17 22:35:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:35:14 utils.py:140] ==================================
+I 03-17 22:35:34 utils.py:131] === Checking the job status... ===
+I 03-17 22:35:35 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:35:35 utils.py:140] ==================================
+I 03-17 22:35:55 utils.py:131] === Checking the job status... ===
+I 03-17 22:35:56 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:35:56 utils.py:140] ==================================
+I 03-17 22:36:16 utils.py:131] === Checking the job status... ===
+I 03-17 22:36:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:36:16 utils.py:140] ==================================
+I 03-17 22:36:37 utils.py:131] === Checking the job status... ===
+I 03-17 22:36:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:36:37 utils.py:140] ==================================
+I 03-17 22:36:57 utils.py:131] === Checking the job status... ===
+I 03-17 22:36:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:36:58 utils.py:140] ==================================
+I 03-17 22:37:18 utils.py:131] === Checking the job status... ===
+I 03-17 22:37:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:37:19 utils.py:140] ==================================
+I 03-17 22:37:39 utils.py:131] === Checking the job status... ===
+I 03-17 22:37:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:37:40 utils.py:140] ==================================
+I 03-17 22:38:00 utils.py:131] === Checking the job status... ===
+I 03-17 22:38:01 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:38:01 utils.py:140] ==================================
+I 03-17 22:38:21 utils.py:131] === Checking the job status... ===
+I 03-17 22:38:22 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:38:22 utils.py:140] ==================================
+I 03-17 22:38:42 utils.py:131] === Checking the job status... ===
+I 03-17 22:38:43 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:38:43 utils.py:140] ==================================
+I 03-17 22:39:03 utils.py:131] === Checking the job status... ===
+I 03-17 22:39:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:39:03 utils.py:140] ==================================
+I 03-17 22:39:24 utils.py:131] === Checking the job status... ===
+I 03-17 22:39:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:39:24 utils.py:140] ==================================
+I 03-17 22:39:44 utils.py:131] === Checking the job status... ===
+I 03-17 22:39:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:39:45 utils.py:140] ==================================
+I 03-17 22:40:05 utils.py:131] === Checking the job status... ===
+I 03-17 22:40:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:40:06 utils.py:140] ==================================
+I 03-17 22:40:26 utils.py:131] === Checking the job status... ===
+I 03-17 22:40:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:40:27 utils.py:140] ==================================
+I 03-17 22:40:47 utils.py:131] === Checking the job status... ===
+I 03-17 22:40:48 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:40:48 utils.py:140] ==================================
+I 03-17 22:41:08 utils.py:131] === Checking the job status... ===
+I 03-17 22:41:09 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:41:09 utils.py:140] ==================================
+I 03-17 22:41:29 utils.py:131] === Checking the job status... ===
+I 03-17 22:41:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:41:29 utils.py:140] ==================================
+I 03-17 22:41:49 utils.py:131] === Checking the job status... ===
+I 03-17 22:41:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:41:50 utils.py:140] ==================================
+I 03-17 22:42:10 utils.py:131] === Checking the job status... ===
+I 03-17 22:42:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:42:11 utils.py:140] ==================================
+I 03-17 22:42:31 utils.py:131] === Checking the job status... ===
+I 03-17 22:42:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:42:32 utils.py:140] ==================================
+I 03-17 22:42:52 utils.py:131] === Checking the job status... ===
+I 03-17 22:42:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:42:53 utils.py:140] ==================================
+I 03-17 22:43:13 utils.py:131] === Checking the job status... ===
+I 03-17 22:43:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:43:14 utils.py:140] ==================================
+I 03-17 22:43:34 utils.py:131] === Checking the job status... ===
+I 03-17 22:43:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:43:34 utils.py:140] ==================================
+I 03-17 22:43:55 utils.py:131] === Checking the job status... ===
+I 03-17 22:43:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:43:55 utils.py:140] ==================================
+I 03-17 22:44:16 utils.py:131] === Checking the job status... ===
+I 03-17 22:44:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:44:16 utils.py:140] ==================================
+I 03-17 22:44:36 utils.py:131] === Checking the job status... ===
+I 03-17 22:44:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:44:37 utils.py:140] ==================================
+I 03-17 22:44:57 utils.py:131] === Checking the job status... ===
+I 03-17 22:44:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:44:58 utils.py:140] ==================================
+I 03-17 22:45:18 utils.py:131] === Checking the job status... ===
+I 03-17 22:45:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:45:19 utils.py:140] ==================================
+I 03-17 22:45:39 utils.py:131] === Checking the job status... ===
+I 03-17 22:45:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:45:40 utils.py:140] ==================================
+I 03-17 22:46:00 utils.py:131] === Checking the job status... ===
+I 03-17 22:46:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:46:00 utils.py:140] ==================================
+I 03-17 22:46:21 utils.py:131] === Checking the job status... ===
+I 03-17 22:46:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:46:21 utils.py:140] ==================================
+I 03-17 22:46:41 utils.py:131] === Checking the job status... ===
+I 03-17 22:46:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:46:42 utils.py:140] ==================================
+I 03-17 22:47:02 utils.py:131] === Checking the job status... ===
+I 03-17 22:47:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:47:03 utils.py:140] ==================================
+I 03-17 22:47:23 utils.py:131] === Checking the job status... ===
+I 03-17 22:47:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:47:24 utils.py:140] ==================================
+I 03-17 22:47:44 utils.py:131] === Checking the job status... ===
+I 03-17 22:47:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:47:45 utils.py:140] ==================================
+I 03-17 22:48:05 utils.py:131] === Checking the job status... ===
+I 03-17 22:48:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:48:06 utils.py:140] ==================================
+I 03-17 22:48:26 utils.py:131] === Checking the job status... ===
+I 03-17 22:48:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:48:27 utils.py:140] ==================================
+I 03-17 22:48:47 utils.py:131] === Checking the job status... ===
+I 03-17 22:48:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:48:47 utils.py:140] ==================================
+I 03-17 22:49:08 utils.py:131] === Checking the job status... ===
+I 03-17 22:49:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:49:08 utils.py:140] ==================================
+I 03-17 22:49:28 utils.py:131] === Checking the job status... ===
+I 03-17 22:49:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:49:29 utils.py:140] ==================================
+I 03-17 22:49:49 utils.py:131] === Checking the job status... ===
+I 03-17 22:49:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:49:50 utils.py:140] ==================================
+I 03-17 22:50:10 utils.py:131] === Checking the job status... ===
+I 03-17 22:50:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:50:11 utils.py:140] ==================================
+I 03-17 22:50:31 utils.py:131] === Checking the job status... ===
+I 03-17 22:50:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:50:32 utils.py:140] ==================================
+I 03-17 22:50:52 utils.py:131] === Checking the job status... ===
+I 03-17 22:50:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:50:53 utils.py:140] ==================================
+I 03-17 22:51:13 utils.py:131] === Checking the job status... ===
+I 03-17 22:51:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:51:14 utils.py:140] ==================================
+I 03-17 22:51:34 utils.py:131] === Checking the job status... ===
+I 03-17 22:51:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:51:34 utils.py:140] ==================================
+I 03-17 22:51:55 utils.py:131] === Checking the job status... ===
+I 03-17 22:51:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:51:55 utils.py:140] ==================================
+I 03-17 22:52:15 utils.py:131] === Checking the job status... ===
+I 03-17 22:52:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:52:16 utils.py:140] ==================================
+I 03-17 22:52:36 utils.py:131] === Checking the job status... ===
+I 03-17 22:52:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:52:37 utils.py:140] ==================================
+I 03-17 22:52:57 utils.py:131] === Checking the job status... ===
+I 03-17 22:52:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:52:58 utils.py:140] ==================================
+I 03-17 22:53:18 utils.py:131] === Checking the job status... ===
+I 03-17 22:53:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:53:19 utils.py:140] ==================================
+I 03-17 22:53:39 utils.py:131] === Checking the job status... ===
+I 03-17 22:53:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:53:40 utils.py:140] ==================================
+I 03-17 22:54:00 utils.py:131] === Checking the job status... ===
+I 03-17 22:54:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:54:00 utils.py:140] ==================================
+I 03-17 22:54:21 utils.py:131] === Checking the job status... ===
+I 03-17 22:54:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:54:21 utils.py:140] ==================================
+I 03-17 22:54:41 utils.py:131] === Checking the job status... ===
+I 03-17 22:54:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:54:42 utils.py:140] ==================================
+I 03-17 22:55:02 utils.py:131] === Checking the job status... ===
+I 03-17 22:55:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:55:03 utils.py:140] ==================================
+I 03-17 22:55:23 utils.py:131] === Checking the job status... ===
+I 03-17 22:55:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:55:24 utils.py:140] ==================================
+I 03-17 22:55:44 utils.py:131] === Checking the job status... ===
+I 03-17 22:55:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:55:45 utils.py:140] ==================================
+I 03-17 22:56:05 utils.py:131] === Checking the job status... ===
+I 03-17 22:56:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:56:06 utils.py:140] ==================================
+I 03-17 22:56:26 utils.py:131] === Checking the job status... ===
+I 03-17 22:56:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:56:27 utils.py:140] ==================================
+I 03-17 22:56:47 utils.py:131] === Checking the job status... ===
+I 03-17 22:56:48 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:56:48 utils.py:140] ==================================
+I 03-17 22:57:08 utils.py:131] === Checking the job status... ===
+I 03-17 22:57:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:57:08 utils.py:140] ==================================
+I 03-17 22:57:29 utils.py:131] === Checking the job status... ===
+I 03-17 22:57:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:57:29 utils.py:140] ==================================
+I 03-17 22:57:49 utils.py:131] === Checking the job status... ===
+I 03-17 22:57:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:57:50 utils.py:140] ==================================
+I 03-17 22:58:10 utils.py:131] === Checking the job status... ===
+I 03-17 22:58:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:58:11 utils.py:140] ==================================
+I 03-17 22:58:31 utils.py:131] === Checking the job status... ===
+I 03-17 22:58:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:58:32 utils.py:140] ==================================
+I 03-17 22:58:52 utils.py:131] === Checking the job status... ===
+I 03-17 22:58:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:58:53 utils.py:140] ==================================
+I 03-17 22:59:13 utils.py:131] === Checking the job status... ===
+I 03-17 22:59:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:59:14 utils.py:140] ==================================
+I 03-17 22:59:34 utils.py:131] === Checking the job status... ===
+I 03-17 22:59:35 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:59:35 utils.py:140] ==================================
+I 03-17 22:59:55 utils.py:131] === Checking the job status... ===
+I 03-17 22:59:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 22:59:55 utils.py:140] ==================================
+I 03-17 23:00:15 utils.py:131] === Checking the job status... ===
+I 03-17 23:00:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:00:16 utils.py:140] ==================================
+I 03-17 23:00:36 utils.py:131] === Checking the job status... ===
+I 03-17 23:00:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:00:37 utils.py:140] ==================================
+I 03-17 23:00:57 utils.py:131] === Checking the job status... ===
+I 03-17 23:00:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:00:58 utils.py:140] ==================================
+I 03-17 23:01:18 utils.py:131] === Checking the job status... ===
+I 03-17 23:01:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:01:19 utils.py:140] ==================================
+I 03-17 23:01:39 utils.py:131] === Checking the job status... ===
+I 03-17 23:01:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:01:40 utils.py:140] ==================================
+I 03-17 23:02:00 utils.py:131] === Checking the job status... ===
+I 03-17 23:02:01 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:02:01 utils.py:140] ==================================
+I 03-17 23:02:21 utils.py:131] === Checking the job status... ===
+I 03-17 23:02:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:02:21 utils.py:140] ==================================
+I 03-17 23:02:42 utils.py:131] === Checking the job status... ===
+I 03-17 23:02:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:02:42 utils.py:140] ==================================
+I 03-17 23:03:02 utils.py:131] === Checking the job status... ===
+I 03-17 23:03:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:03:03 utils.py:140] ==================================
+I 03-17 23:03:23 utils.py:131] === Checking the job status... ===
+I 03-17 23:03:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:03:24 utils.py:140] ==================================
+I 03-17 23:03:44 utils.py:131] === Checking the job status... ===
+I 03-17 23:03:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:03:45 utils.py:140] ==================================
+I 03-17 23:04:05 utils.py:131] === Checking the job status... ===
+I 03-17 23:04:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:04:06 utils.py:140] ==================================
+I 03-17 23:04:26 utils.py:131] === Checking the job status... ===
+I 03-17 23:04:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:04:27 utils.py:140] ==================================
+I 03-17 23:04:47 utils.py:131] === Checking the job status... ===
+I 03-17 23:04:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:04:47 utils.py:140] ==================================
+I 03-17 23:05:08 utils.py:131] === Checking the job status... ===
+I 03-17 23:05:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:05:08 utils.py:140] ==================================
+I 03-17 23:05:28 utils.py:131] === Checking the job status... ===
+I 03-17 23:05:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:05:29 utils.py:140] ==================================
+I 03-17 23:05:49 utils.py:131] === Checking the job status... ===
+I 03-17 23:05:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:05:50 utils.py:140] ==================================
+I 03-17 23:06:10 utils.py:131] === Checking the job status... ===
+I 03-17 23:06:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:06:11 utils.py:140] ==================================
+I 03-17 23:06:31 utils.py:131] === Checking the job status... ===
+I 03-17 23:06:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:06:32 utils.py:140] ==================================
+I 03-17 23:06:52 utils.py:131] === Checking the job status... ===
+I 03-17 23:06:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:06:53 utils.py:140] ==================================
+I 03-17 23:07:13 utils.py:131] === Checking the job status... ===
+I 03-17 23:07:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:07:14 utils.py:140] ==================================
+I 03-17 23:07:34 utils.py:131] === Checking the job status... ===
+I 03-17 23:07:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:07:34 utils.py:140] ==================================
+I 03-17 23:07:55 utils.py:131] === Checking the job status... ===
+I 03-17 23:07:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:07:55 utils.py:140] ==================================
+I 03-17 23:08:15 utils.py:131] === Checking the job status... ===
+I 03-17 23:08:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:08:16 utils.py:140] ==================================
+I 03-17 23:08:36 utils.py:131] === Checking the job status... ===
+I 03-17 23:08:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:08:37 utils.py:140] ==================================
+I 03-17 23:08:57 utils.py:131] === Checking the job status... ===
+I 03-17 23:08:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:08:58 utils.py:140] ==================================
+I 03-17 23:09:18 utils.py:131] === Checking the job status... ===
+I 03-17 23:09:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:09:19 utils.py:140] ==================================
+I 03-17 23:09:39 utils.py:131] === Checking the job status... ===
+I 03-17 23:09:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:09:40 utils.py:140] ==================================
+I 03-17 23:10:00 utils.py:131] === Checking the job status... ===
+I 03-17 23:10:01 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:10:01 utils.py:140] ==================================
+I 03-17 23:10:21 utils.py:131] === Checking the job status... ===
+I 03-17 23:10:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:10:21 utils.py:140] ==================================
+I 03-17 23:10:42 utils.py:131] === Checking the job status... ===
+I 03-17 23:10:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:10:42 utils.py:140] ==================================
+I 03-17 23:11:02 utils.py:131] === Checking the job status... ===
+I 03-17 23:11:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:11:03 utils.py:140] ==================================
+I 03-17 23:11:23 utils.py:131] === Checking the job status... ===
+I 03-17 23:11:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:11:24 utils.py:140] ==================================
+I 03-17 23:11:44 utils.py:131] === Checking the job status... ===
+I 03-17 23:11:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:11:45 utils.py:140] ==================================
+I 03-17 23:12:05 utils.py:131] === Checking the job status... ===
+I 03-17 23:12:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:12:06 utils.py:140] ==================================
+I 03-17 23:12:26 utils.py:131] === Checking the job status... ===
+I 03-17 23:12:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:12:27 utils.py:140] ==================================
+I 03-17 23:12:47 utils.py:131] === Checking the job status... ===
+I 03-17 23:12:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:12:47 utils.py:140] ==================================
+I 03-17 23:13:08 utils.py:131] === Checking the job status... ===
+I 03-17 23:13:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:13:08 utils.py:140] ==================================
+I 03-17 23:13:28 utils.py:131] === Checking the job status... ===
+I 03-17 23:13:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:13:29 utils.py:140] ==================================
+I 03-17 23:13:49 utils.py:131] === Checking the job status... ===
+I 03-17 23:13:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:13:50 utils.py:140] ==================================
+I 03-17 23:14:10 utils.py:131] === Checking the job status... ===
+I 03-17 23:14:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:14:11 utils.py:140] ==================================
+I 03-17 23:14:31 utils.py:131] === Checking the job status... ===
+I 03-17 23:14:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:14:32 utils.py:140] ==================================
+I 03-17 23:14:52 utils.py:131] === Checking the job status... ===
+I 03-17 23:14:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:14:53 utils.py:140] ==================================
+I 03-17 23:15:13 utils.py:131] === Checking the job status... ===
+I 03-17 23:15:13 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:15:13 utils.py:140] ==================================
+I 03-17 23:15:34 utils.py:131] === Checking the job status... ===
+I 03-17 23:15:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:15:34 utils.py:140] ==================================
+I 03-17 23:15:54 utils.py:131] === Checking the job status... ===
+I 03-17 23:15:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:15:55 utils.py:140] ==================================
+I 03-17 23:16:15 utils.py:131] === Checking the job status... ===
+I 03-17 23:16:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:16:16 utils.py:140] ==================================
+I 03-17 23:16:36 utils.py:131] === Checking the job status... ===
+I 03-17 23:16:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:16:37 utils.py:140] ==================================
+I 03-17 23:16:57 utils.py:131] === Checking the job status... ===
+I 03-17 23:16:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:16:58 utils.py:140] ==================================
+I 03-17 23:17:18 utils.py:131] === Checking the job status... ===
+I 03-17 23:17:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:17:19 utils.py:140] ==================================
+I 03-17 23:17:39 utils.py:131] === Checking the job status... ===
+I 03-17 23:17:39 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:17:39 utils.py:140] ==================================
+I 03-17 23:18:00 utils.py:131] === Checking the job status... ===
+I 03-17 23:18:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:18:00 utils.py:140] ==================================
+I 03-17 23:18:21 utils.py:131] === Checking the job status... ===
+I 03-17 23:18:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:18:21 utils.py:140] ==================================
+I 03-17 23:18:41 utils.py:131] === Checking the job status... ===
+I 03-17 23:18:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:18:42 utils.py:140] ==================================
+I 03-17 23:19:02 utils.py:131] === Checking the job status... ===
+I 03-17 23:19:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:19:03 utils.py:140] ==================================
+I 03-17 23:19:23 utils.py:131] === Checking the job status... ===
+I 03-17 23:19:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:19:24 utils.py:140] ==================================
+I 03-17 23:19:44 utils.py:131] === Checking the job status... ===
+I 03-17 23:19:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:19:45 utils.py:140] ==================================
+I 03-17 23:20:05 utils.py:131] === Checking the job status... ===
+I 03-17 23:20:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:20:06 utils.py:140] ==================================
+I 03-17 23:20:26 utils.py:131] === Checking the job status... ===
+I 03-17 23:20:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:20:27 utils.py:140] ==================================
+I 03-17 23:20:47 utils.py:131] === Checking the job status... ===
+I 03-17 23:20:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:20:47 utils.py:140] ==================================
+I 03-17 23:21:08 utils.py:131] === Checking the job status... ===
+I 03-17 23:21:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:21:08 utils.py:140] ==================================
+I 03-17 23:21:28 utils.py:131] === Checking the job status... ===
+I 03-17 23:21:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:21:29 utils.py:140] ==================================
+I 03-17 23:21:49 utils.py:131] === Checking the job status... ===
+I 03-17 23:21:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:21:50 utils.py:140] ==================================
+I 03-17 23:22:10 utils.py:131] === Checking the job status... ===
+I 03-17 23:22:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:22:11 utils.py:140] ==================================
+I 03-17 23:22:31 utils.py:131] === Checking the job status... ===
+I 03-17 23:22:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:22:32 utils.py:140] ==================================
+I 03-17 23:22:52 utils.py:131] === Checking the job status... ===
+I 03-17 23:22:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:22:53 utils.py:140] ==================================
+I 03-17 23:23:13 utils.py:131] === Checking the job status... ===
+I 03-17 23:23:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:23:14 utils.py:140] ==================================
+I 03-17 23:23:34 utils.py:131] === Checking the job status... ===
+I 03-17 23:23:34 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:23:34 utils.py:140] ==================================
+I 03-17 23:23:54 utils.py:131] === Checking the job status... ===
+I 03-17 23:23:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:23:55 utils.py:140] ==================================
+I 03-17 23:24:15 utils.py:131] === Checking the job status... ===
+I 03-17 23:24:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:24:16 utils.py:140] ==================================
+I 03-17 23:24:36 utils.py:131] === Checking the job status... ===
+I 03-17 23:24:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:24:37 utils.py:140] ==================================
+I 03-17 23:24:57 utils.py:131] === Checking the job status... ===
+I 03-17 23:24:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:24:58 utils.py:140] ==================================
+I 03-17 23:25:18 utils.py:131] === Checking the job status... ===
+I 03-17 23:25:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:25:19 utils.py:140] ==================================
+I 03-17 23:25:39 utils.py:131] === Checking the job status... ===
+I 03-17 23:25:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:25:40 utils.py:140] ==================================
+I 03-17 23:26:00 utils.py:131] === Checking the job status... ===
+I 03-17 23:26:00 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:26:00 utils.py:140] ==================================
+I 03-17 23:26:21 utils.py:131] === Checking the job status... ===
+I 03-17 23:26:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:26:21 utils.py:140] ==================================
+I 03-17 23:26:41 utils.py:131] === Checking the job status... ===
+I 03-17 23:26:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:26:42 utils.py:140] ==================================
+I 03-17 23:27:02 utils.py:131] === Checking the job status... ===
+I 03-17 23:27:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:27:03 utils.py:140] ==================================
+I 03-17 23:27:23 utils.py:131] === Checking the job status... ===
+I 03-17 23:27:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:27:24 utils.py:140] ==================================
+I 03-17 23:27:44 utils.py:131] === Checking the job status... ===
+I 03-17 23:27:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:27:45 utils.py:140] ==================================
+I 03-17 23:28:05 utils.py:131] === Checking the job status... ===
+I 03-17 23:28:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:28:06 utils.py:140] ==================================
+I 03-17 23:28:26 utils.py:131] === Checking the job status... ===
+I 03-17 23:28:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:28:27 utils.py:140] ==================================
+I 03-17 23:28:47 utils.py:131] === Checking the job status... ===
+I 03-17 23:28:47 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:28:47 utils.py:140] ==================================
+I 03-17 23:29:08 utils.py:131] === Checking the job status... ===
+I 03-17 23:29:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:29:08 utils.py:140] ==================================
+I 03-17 23:29:28 utils.py:131] === Checking the job status... ===
+I 03-17 23:29:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:29:29 utils.py:140] ==================================
+I 03-17 23:29:49 utils.py:131] === Checking the job status... ===
+I 03-17 23:29:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:29:50 utils.py:140] ==================================
+I 03-17 23:30:10 utils.py:131] === Checking the job status... ===
+I 03-17 23:30:11 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:30:11 utils.py:140] ==================================
+I 03-17 23:30:31 utils.py:131] === Checking the job status... ===
+I 03-17 23:30:32 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:30:32 utils.py:140] ==================================
+I 03-17 23:30:52 utils.py:131] === Checking the job status... ===
+I 03-17 23:30:53 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:30:53 utils.py:140] ==================================
+I 03-17 23:31:13 utils.py:131] === Checking the job status... ===
+I 03-17 23:31:14 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:31:14 utils.py:140] ==================================
+I 03-17 23:31:34 utils.py:131] === Checking the job status... ===
+I 03-17 23:31:35 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:31:35 utils.py:140] ==================================
+I 03-17 23:31:55 utils.py:131] === Checking the job status... ===
+I 03-17 23:31:55 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:31:55 utils.py:140] ==================================
+I 03-17 23:32:15 utils.py:131] === Checking the job status... ===
+I 03-17 23:32:16 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:32:16 utils.py:140] ==================================
+I 03-17 23:32:36 utils.py:131] === Checking the job status... ===
+I 03-17 23:32:37 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:32:37 utils.py:140] ==================================
+I 03-17 23:32:57 utils.py:131] === Checking the job status... ===
+I 03-17 23:32:58 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:32:58 utils.py:140] ==================================
+I 03-17 23:33:18 utils.py:131] === Checking the job status... ===
+I 03-17 23:33:19 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:33:19 utils.py:140] ==================================
+I 03-17 23:33:39 utils.py:131] === Checking the job status... ===
+I 03-17 23:33:40 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:33:40 utils.py:140] ==================================
+I 03-17 23:34:00 utils.py:131] === Checking the job status... ===
+I 03-17 23:34:01 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:34:01 utils.py:140] ==================================
+I 03-17 23:34:21 utils.py:131] === Checking the job status... ===
+I 03-17 23:34:21 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:34:21 utils.py:140] ==================================
+I 03-17 23:34:41 utils.py:131] === Checking the job status... ===
+I 03-17 23:34:42 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:34:42 utils.py:140] ==================================
+I 03-17 23:35:02 utils.py:131] === Checking the job status... ===
+I 03-17 23:35:03 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:35:03 utils.py:140] ==================================
+I 03-17 23:35:23 utils.py:131] === Checking the job status... ===
+I 03-17 23:35:24 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:35:24 utils.py:140] ==================================
+I 03-17 23:35:44 utils.py:131] === Checking the job status... ===
+I 03-17 23:35:45 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:35:45 utils.py:140] ==================================
+I 03-17 23:36:05 utils.py:131] === Checking the job status... ===
+I 03-17 23:36:06 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:36:06 utils.py:140] ==================================
+I 03-17 23:36:26 utils.py:131] === Checking the job status... ===
+I 03-17 23:36:27 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:36:27 utils.py:140] ==================================
+I 03-17 23:36:47 utils.py:131] === Checking the job status... ===
+I 03-17 23:36:48 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:36:48 utils.py:140] ==================================
+I 03-17 23:37:08 utils.py:131] === Checking the job status... ===
+I 03-17 23:37:08 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:37:08 utils.py:140] ==================================
+I 03-17 23:37:29 utils.py:131] === Checking the job status... ===
+I 03-17 23:37:29 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:37:29 utils.py:140] ==================================
+I 03-17 23:37:50 utils.py:131] === Checking the job status... ===
+I 03-17 23:37:50 utils.py:137] Job status: JobStatus.RUNNING
+I 03-17 23:37:50 utils.py:140] ==================================
+I 03-17 23:38:10 utils.py:131] === Checking the job status... ===
+I 03-17 23:38:11 utils.py:137] Job status: JobStatus.SUCCEEDED
+I 03-17 23:38:11 utils.py:140] ==================================
+I 03-17 23:38:12 state.py:561] Job succeeded.
+I 03-17 23:38:12 controller.py:238] Managed job 76 (task: 0) SUCCEEDED. Cleaning up the cluster compute-text-vectors-76.
+E 03-17 23:38:13 controller_utils.py:376] Failed to find the logs for the user program at ~/sky_logs/managed_jobs/sky-2025-03-17-21-16-51-694801/run.log.
+I 03-17 23:38:13 controller.py:117] 
+I 03-17 23:38:13 controller.py:117] == End of logs (ID: 76) ==
+I 03-17 23:38:21 state.py:656] Cancellation skipped, job is already terminal
+I 03-17 23:38:21 state.py:677] Cancellation skipped, job is not CANCELLING
+I 03-17 23:38:22 controller.py:552] Killing controller process 34932.
+I 03-17 23:38:22 controller.py:560] Controller process 34932 killed.
+I 03-17 23:38:22 controller.py:562] Cleaning up any cluster for job 76.
+I 03-17 23:38:23 storage.py:699] Verifying bucket for storage skypilot-filemounts-root-726f1974-8pphi2ek
+<sky-payload>"<rich_init>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-8pphi2ek[/][/]</rich_init>"</sky-payload>
+<sky-payload>"<rich_update>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-8pphi2ek[/][/]</rich_update>"</sky-payload>
+<sky-payload>"<rich_start>[bold cyan]Deleting S3 bucket [green]skypilot-filemounts-root-726f1974-8pphi2ek[/][/]</rich_start>"</sky-payload>
+<sky-payload>"<rich_exit></rich_exit>"</sky-payload>
+I 03-17 23:38:24 storage.py:1505] [32mDeleted S3 bucket skypilot-filemounts-root-726f1974-8pphi2ek.[0m
+I 03-17 23:38:24 controller.py:571] Cluster of managed job 76 has been cleaned up.
